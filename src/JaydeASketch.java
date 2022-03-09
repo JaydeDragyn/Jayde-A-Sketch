@@ -20,15 +20,16 @@ public class JaydeASketch extends JPanel {
     // Member Data ------------------------------------------------------------
 
     private final Dimension PANEL_SIZE;
-
     private final Color SURFACE_DEFAULT;
     private final Color DRAW_COLOR;
     private BufferedImage drawingSurface;
     private Graphics drawingSurfacePen;
     private final Point drawingSurfaceOffset;
+    private BufferedImage penPointer;
+    private final Color PEN_COLOR;
+    private final Dimension PEN_POINTER_SIZE;
     private final Point penLocation;
     private Point mouseDragOrigin;
-
     private State controlState;
     private boolean axisLock;
     private State axisLockDir;
@@ -42,6 +43,8 @@ public class JaydeASketch extends JPanel {
         SURFACE_DEFAULT = new Color(168,168,168);
         DRAW_COLOR = new Color(32,32,32);
         drawingSurfaceOffset = new Point(0,0);
+        PEN_COLOR = new Color(255,255,255);
+        PEN_POINTER_SIZE = new Dimension(4,4);
         penLocation = new Point(PANEL_SIZE.width / 2, PANEL_SIZE.height / 2);
         controlState = State.IDLE;
         axisLock = false;
@@ -168,10 +171,17 @@ public class JaydeASketch extends JPanel {
         System.out.print("Mouse Wheel Moved: " + e.getWheelRotation());
     }
 
+    @Override
+    public void paintComponent(Graphics g) {
+        g.drawImage(drawingSurface, drawingSurfaceOffset.x, drawingSurfaceOffset.y, null);
+        g.drawImage(penPointer, penLocation.x - (PEN_POINTER_SIZE.width / 2), penLocation.y - (PEN_POINTER_SIZE.height / 2), null);
+    }
+
     public void initialize() {
         initPanel();
         initFrame();
         initDrawingSurface();
+        initPenPointer();
         initInterface();
     }
 
@@ -201,9 +211,14 @@ public class JaydeASketch extends JPanel {
         paintComponent(getGraphics());
     }
 
-    @Override
-    public void paintComponent(Graphics g) {
-        g.drawImage(drawingSurface, drawingSurfaceOffset.x, drawingSurfaceOffset.y, null);
+    private void initPenPointer() {
+        penPointer = new BufferedImage(PEN_POINTER_SIZE.width,PEN_POINTER_SIZE.height,BufferedImage.TYPE_INT_RGB);
+        Graphics g = penPointer.getGraphics();
+        g.setColor(SURFACE_DEFAULT);
+        g.fillRect(0,0,PEN_POINTER_SIZE.width,PEN_POINTER_SIZE.height);
+        g.setColor(PEN_COLOR);
+        g.fillOval(PEN_POINTER_SIZE.width / 2, PEN_POINTER_SIZE.height / 2, PEN_POINTER_SIZE.width, PEN_POINTER_SIZE.height);
+        g.dispose();
     }
 
     private void initInterface() {
