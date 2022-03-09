@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.awt.image.*;
 
 public class JaydeASketch extends JPanel {
@@ -17,10 +18,39 @@ public class JaydeASketch extends JPanel {
         SURFACE_DEFAULT = new Color(168,168,168);
     }
 
+    private void processKeyTyped(KeyEvent e) {
+
+    }
+
+    private void processKeyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) { System.exit(0); }
+    }
+
+    private void processKeyReleased(KeyEvent e) {
+
+    }
+
+    private void processMousePressed(MouseEvent e) {
+
+    }
+
+    private void processMouseReleased(MouseEvent e) {
+
+    }
+
+    private void processMouseDragged(MouseEvent e) {
+
+    }
+
+    private void processMouseWheelMoved(MouseEvent e) {
+
+    }
+
     public void initialize() {
         initPanel();
         initFrame();
         initDrawingSurface();
+        initInterface();
     }
 
     private void initPanel() {
@@ -35,6 +65,8 @@ public class JaydeASketch extends JPanel {
         frame.add(this);
         frame.pack();
         frame.setVisible(true);
+
+        requestFocusInWindow();
     }
 
     private void initDrawingSurface() {
@@ -50,6 +82,59 @@ public class JaydeASketch extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         g.drawImage(drawingSurface, 0, 0, null);
+    }
+
+    private void initInterface() {
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                super.keyTyped(e);
+                processKeyTyped(e);
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                super.keyPressed(e);
+                processKeyPressed(e);
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                super.keyReleased(e);
+                processKeyReleased(e);
+            }
+        });
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                super.mousePressed(e);
+                processMousePressed(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+                processMouseReleased(e);
+            }
+        });
+
+        addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                super.mouseDragged(e);
+                processMouseDragged(e);
+            }
+        });
+
+        addMouseWheelListener(new MouseAdapter() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                super.mouseWheelMoved(e);
+                processMouseWheelMoved(e);
+            }
+        });
+
     }
 
     public static void main(String[] args) { SwingUtilities.invokeLater(JaydeASketch::createAndShowDisplay);}
