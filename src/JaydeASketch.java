@@ -5,6 +5,20 @@ import java.awt.image.*;
 
 public class JaydeASketch extends JPanel {
 
+    private enum State {
+        // Control states
+        IDLE,               // No mouse button pressed
+        DRAWING,            // LMB held, so moving the pen around
+        PANNING,            // RMB held, so panning the image around
+
+        // Modifiers
+        AXIS_LOCK,          // Holding Shift while DRAWING or PANNING
+        FINE_CONTROL,       // Holding Alt while DRAWING or PANNING
+        SNAP_TO_GRID,       // Holding Ctrl while DRAWING or PANNING
+    }
+
+    // Member Data ------------------------------------------------------------
+
     private JFrame frame;
     private final Dimension PANEL_SIZE;
 
@@ -12,6 +26,8 @@ public class JaydeASketch extends JPanel {
     private BufferedImage drawingSurface;
     private Graphics drawingSurfacePen;
     private Point penLocation;
+
+    // Member Methods ---------------------------------------------------------
 
     public JaydeASketch() {
         PANEL_SIZE = new Dimension(800,600);
