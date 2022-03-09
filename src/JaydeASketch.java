@@ -19,31 +19,40 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processKeyTyped(KeyEvent e) {
-
+        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        System.out.print("Key Typed: '" + e.getKeyChar() + "'");
     }
 
     private void processKeyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) { System.exit(0); }
+        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        System.out.print("Key Pressed: " + e.getKeyCode());
     }
 
     private void processKeyReleased(KeyEvent e) {
-
+        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        System.out.print("Key Released: " + e.getKeyCode());
     }
 
     private void processMousePressed(MouseEvent e) {
-
+        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        System.out.print("Mouse Pressed: " + e.getButton() + " at " + e.getX() + "," + e.getY());
     }
 
     private void processMouseReleased(MouseEvent e) {
+        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        System.out.print("Mouse Released: " + e.getButton() + " at " + e.getX() + "," + e.getY());
 
     }
 
     private void processMouseDragged(MouseEvent e) {
-
+        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        System.out.print("Mouse Dragged: " + e.getButton() + " at " + e.getX() + "," + e.getY());
     }
 
-    private void processMouseWheelMoved(MouseEvent e) {
-
+    private void processMouseWheelMoved(MouseWheelEvent e) {
+        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        System.out.print("Mouse Wheel Moved: " + e.getWheelRotation());
     }
 
     public void initialize() {
