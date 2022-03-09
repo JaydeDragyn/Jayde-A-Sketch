@@ -32,6 +32,8 @@ public class JaydeASketch extends JPanel {
     private State controlState;
     private boolean axisLock;
     private State axisLockDir;
+    private final int AXIS_LOCK_THRESHOLD;
+    private Dimension axisLockAccumulator;
 
     // Member Methods ---------------------------------------------------------
 
@@ -44,30 +46,45 @@ public class JaydeASketch extends JPanel {
         controlState = State.IDLE;
         axisLock = false;
         axisLockDir = State.NO_AXIS;
+        AXIS_LOCK_THRESHOLD = 5;
+        axisLockAccumulator = new Dimension(0,0);
     }
 
     private Point calculateMouseDelta(MouseEvent e) {
-        Point mouseRawDelta = new Point(e.getX() - mouseDragOrigin.x, e.getY() - mouseDragOrigin.y);
-        Point mouseAxisDelta = calculateAxisLock(mouseRawDelta);
-
-        return mouseAxisDelta;
+        Point mouseDelta = new Point(e.getX() - mouseDragOrigin.x, e.getY() - mouseDragOrigin.y);
+        adjustForAxisLock(mouseDelta);
+        return mouseDelta;
     }
 
-    private Point calculateAxisLock(Point delta) {
-        if (axisLock) {
+    private void adjustForAxisLock(Point delta) {
+        if (!axisLock) { return; }
 
-            if (axisLockDir == State.NO_AXIS)
-                if (delta.x < delta.y)
+        // The mouse delta is usually 1,0 or 0,1, so to give the user a chance to choose
+        // the direction without getting stuck due to single-pixel mouse precision,
+        // we'll ignore a few pixels of movement (AXIS_LOCK_THRESHOLD) while we accumulate
+        // the deltas for those pixels.
+        // When we have accumulated enough data, we choose which direction to lock based on
+        // which direction the user moved the mouse the furthest
+        // Accumulator resets when the user releases Shift, so we're locked until then
+        if (axisLockDir == State.NO_AXIS) {
+            axisLockAccumulator.width += Math.abs(delta.x);
+            axisLockAccumulator.height += Math.abs(delta.y);
+
+            if (Math.abs(axisLockAccumulator.width - axisLockAccumulator.height) >= AXIS_LOCK_THRESHOLD) {
+                if (axisLockAccumulator.width < axisLockAccumulator.height)
                     axisLockDir = State.VERTICAL_AXIS;
                 else
                     axisLockDir = State.HORIZONTAL_AXIS;
-
-            if (axisLockDir == State.HORIZONTAL_AXIS)
+            } else {
+                delta.x = 0;    // still accumulating data, ignore this movement
                 delta.y = 0;
-            if (axisLockDir == State.VERTICAL_AXIS)
-                delta.x = 0;
+            }
         }
-        return delta;
+
+        if (axisLockDir == State.HORIZONTAL_AXIS)
+            delta.y = 0;
+        if (axisLockDir == State.VERTICAL_AXIS)
+            delta.x = 0;
     }
 
     private void dragPen(MouseEvent e) {
@@ -123,7 +140,11 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processKeyReleased(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_SHIFT) { axisLock = false; axisLockDir = State.NO_AXIS; }
+        if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
+            axisLock = false;
+            axisLockDir = State.NO_AXIS;
+            axisLockAccumulator = new Dimension(0,0);
+        }
     }
 
     private void processMousePressed(MouseEvent e) {
