@@ -1,0 +1,27 @@
+Jayde-A-Sketch (Jayde's version of an Etch-A-Sketch)
+
+The idea for this is to use mouse and arrow-key input to drag the "cursor" around on
+a white (or gray) board to draw pictures.  Like an actual Etch-a-Sketch, the point
+of drawing never leaves the surface, so everything is a continuous line.
+
+A shake of the board will erase it, and we start over.
+
+This is idea for what I want to work on - updating a BufferedImage object to display
+"realtime".
+
+We'll  use 2 mouse buttons now - left mouse button to drag the cursor (just moving
+the mouse will get frustrating, so let us at least make it a conscious decision), and
+right mouse button will pan the image around (with alt for Fine control, Shift for
+Axis lock and Ctrl for snap to grid behavior).  Arrow keys to move the cursor or the
+board (arrow moves cursor, Ctrl-arrow moves the board)
+
+If one button is already held down, ignore the other button press (first button
+held takes priority and will lock out any other button presses until it is released).
+
+For Shift (Axis Lock), we'll make a new LMB origin at the point where the user
+presses Shift, and we'll stop locking when they release, they can make a jagged line
+with straight sections if they want by repeatedly holding and releasing shift while
+they drag with LMB.
+
+
+
