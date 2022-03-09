@@ -35,6 +35,9 @@ public class JaydeASketch extends JPanel {
     private State axisLockDir;
     private final int AXIS_LOCK_THRESHOLD;
     private Dimension axisLockAccumulator;
+    private boolean fineControl;
+    private final int FINE_CONTROL_LEVEL;
+    private Dimension fineControlAccumulator;
 
     // Member Methods ---------------------------------------------------------
 
@@ -51,12 +54,40 @@ public class JaydeASketch extends JPanel {
         axisLockDir = State.NO_AXIS;
         AXIS_LOCK_THRESHOLD = 5;
         axisLockAccumulator = new Dimension(0,0);
+        fineControl = false;
+        FINE_CONTROL_LEVEL = 5;
+        fineControlAccumulator = new Dimension(0,0);
     }
 
     private Point calculateMouseDelta(MouseEvent e) {
         Point mouseDelta = new Point(e.getX() - mouseDragOrigin.x, e.getY() - mouseDragOrigin.y);
+        adjustForFineControl(mouseDelta);
         adjustForAxisLock(mouseDelta);
         return mouseDelta;
+    }
+
+    private void adjustForFineControl(Point delta) {
+        if (!fineControl) { return; }
+
+        // The mouse delta is usually 1,0 or 0,1, so fine control will accumulate
+        // deltas until we hit the FINE_CONTROL_LEVEL, and then we will delta in
+        // the direction accumulated and reset that direction.  This way we can
+        // reduce how far the pointer travels, and doing this before other
+        // controls will also reduce how fast they accumulate deltas.
+        fineControlAccumulator.width += Math.abs(delta.x);
+        fineControlAccumulator.height += Math.abs(delta.y);
+
+        if (fineControlAccumulator.width > FINE_CONTROL_LEVEL) {
+            fineControlAccumulator.width = 0;
+        } else {
+            delta.x = 0;
+        }
+
+        if (fineControlAccumulator.height > FINE_CONTROL_LEVEL) {
+            fineControlAccumulator.height = 0;
+        } else {
+            delta.y = 0;
+        }
     }
 
     private void adjustForAxisLock(Point delta) {
@@ -140,6 +171,7 @@ public class JaydeASketch extends JPanel {
     private void processKeyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) { System.exit(0); }
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) { axisLock = true; }
+        if (e.getKeyCode() == KeyEvent.VK_ALT) { fineControl = true; }
     }
 
     private void processKeyReleased(KeyEvent e) {
@@ -147,6 +179,10 @@ public class JaydeASketch extends JPanel {
             axisLock = false;
             axisLockDir = State.NO_AXIS;
             axisLockAccumulator = new Dimension(0,0);
+        }
+        if (e.getKeyCode() == KeyEvent.VK_ALT) {
+            fineControl = false;
+            fineControlAccumulator = new Dimension(0,0);
         }
     }
 
