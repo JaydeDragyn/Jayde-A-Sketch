@@ -9,17 +9,16 @@ public class JaydeASketch extends JPanel {
         // Control states
         IDLE,               // No mouse button pressed
         DRAWING,            // LMB held, so moving the pen around
-        PANNING,            // RMB held, so panning the image around
-
-        // Modifiers
-        AXIS_LOCK,          // Holding Shift while DRAWING or PANNING
-        FINE_CONTROL,       // Holding Alt while DRAWING or PANNING
-        SNAP_TO_GRID,       // Holding Ctrl while DRAWING or PANNING
+//        PANNING,            // RMB held, so panning the image around
+//
+//        // Modifiers
+//        AXIS_LOCK,          // Holding Shift while DRAWING or PANNING
+//        FINE_CONTROL,       // Holding Alt while DRAWING or PANNING
+//        SNAP_TO_GRID,       // Holding Ctrl while DRAWING or PANNING
     }
 
     // Member Data ------------------------------------------------------------
 
-    private JFrame frame;
     private final Dimension PANEL_SIZE;
 
     private final Color SURFACE_DEFAULT;
@@ -77,9 +76,6 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processMousePressed(MouseEvent e) {
-        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-        System.out.print("Mouse Pressed: " + e.getButton() + " at " + e.getX() + "," + e.getY());
-
         if (controlState != State.IDLE) { return; }
         if (e.getButton() == MouseEvent.BUTTON1) {
             controlState = State.DRAWING;
@@ -88,16 +84,10 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processMouseReleased(MouseEvent e) {
-        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-        System.out.print("Mouse Released: " + e.getButton() + " at " + e.getX() + "," + e.getY());
-
         if (controlState == State.DRAWING && e.getButton() == MouseEvent.BUTTON1) { controlState = State.IDLE; }
     }
 
     private void processMouseDragged(MouseEvent e) {
-        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-        System.out.print("Mouse Dragged: " + e.getButton() + " at " + e.getX() + "," + e.getY());
-
         if (controlState == State.DRAWING) { dragPen(e); }
     }
 
@@ -119,7 +109,7 @@ public class JaydeASketch extends JPanel {
     }
 
     private void initFrame() {
-        frame = new JFrame("Jayde-A-Sketch");
+        JFrame frame = new JFrame("Jayde-A-Sketch");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
         frame.add(this);
