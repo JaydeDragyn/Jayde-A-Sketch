@@ -4,11 +4,14 @@ import java.awt.*;
 public class JaydeASketch extends JPanel {
 
     private JFrame frame;
+    private final Dimension PANEL_SIZE;
 
-    public JaydeASketch() { }
+    public JaydeASketch() {
+        PANEL_SIZE = new Dimension(800,600);
+    }
 
     public void initialize() {
-        setPreferredSize(new Dimension(800, 600));
+        setPreferredSize(PANEL_SIZE);
         setBackground(Color.BLACK);
 
         frame = new JFrame("Jayde-A-Sketch");
