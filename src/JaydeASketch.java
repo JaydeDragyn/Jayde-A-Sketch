@@ -10,11 +10,11 @@ public class JaydeASketch extends JPanel {
         IDLE,               // No mouse button pressed
         DRAWING,            // LMB held, so moving the pen around
 //        PANNING,            // RMB held, so panning the image around
-//
-//        // Modifiers
-//        AXIS_LOCK,          // Holding Shift while DRAWING or PANNING
-//        FINE_CONTROL,       // Holding Alt while DRAWING or PANNING
-//        SNAP_TO_GRID,       // Holding Ctrl while DRAWING or PANNING
+
+        // Axis lock
+        NO_AXIS,
+        VERTICAL_AXIS,
+        HORIZONTAL_AXIS,
     }
 
     // Member Data ------------------------------------------------------------
@@ -30,6 +30,8 @@ public class JaydeASketch extends JPanel {
     private Point mouseDragOrigin;
 
     private State controlState;
+    private boolean axisLock;
+    private State axisLockDir;
 
     // Member Methods ---------------------------------------------------------
 
@@ -40,17 +42,42 @@ public class JaydeASketch extends JPanel {
         drawingSurfaceOffset = new Point(0,0);
         penLocation = new Point(PANEL_SIZE.width / 2, PANEL_SIZE.height / 2);
         controlState = State.IDLE;
+        axisLock = false;
+        axisLockDir = State.NO_AXIS;
+    }
+
+    private Point calculateMouseDelta(MouseEvent e) {
+        Point mouseRawDelta = new Point(e.getX() - mouseDragOrigin.x, e.getY() - mouseDragOrigin.y);
+        Point mouseAxisDelta = calculateAxisLock(mouseRawDelta);
+
+        return mouseAxisDelta;
+    }
+
+    private Point calculateAxisLock(Point delta) {
+        if (axisLock) {
+
+            if (axisLockDir == State.NO_AXIS)
+                if (delta.x < delta.y)
+                    axisLockDir = State.VERTICAL_AXIS;
+                else
+                    axisLockDir = State.HORIZONTAL_AXIS;
+
+            if (axisLockDir == State.HORIZONTAL_AXIS)
+                delta.y = 0;
+            if (axisLockDir == State.VERTICAL_AXIS)
+                delta.x = 0;
+        }
+        return delta;
     }
 
     private void dragPen(MouseEvent e) {
-        int mouseDeltaX = e.getX() - mouseDragOrigin.x;
-        int mouseDeltaY = e.getY() - mouseDragOrigin.y;
+        Point mouseDelta = calculateMouseDelta(e);
 
         Point startingPenLocation = new Point(penLocation);
-        penLocation.x += mouseDeltaX;
-        penLocation.y += mouseDeltaY;
-        mouseDragOrigin.x += mouseDeltaX;
-        mouseDragOrigin.y += mouseDeltaY;
+        penLocation.x += mouseDelta.x;
+        penLocation.y += mouseDelta.y;
+        mouseDragOrigin.x = e.getX();
+        mouseDragOrigin.y = e.getY();
 
         if (penLocation.x < 0) { penLocation.x = 0; }
         if (penLocation.x > PANEL_SIZE.width) { penLocation.x = PANEL_SIZE.width; }
@@ -92,13 +119,11 @@ public class JaydeASketch extends JPanel {
 
     private void processKeyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) { System.exit(0); }
-        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-        System.out.print("Key Pressed: " + e.getKeyCode());
+        if (e.getKeyCode() == KeyEvent.VK_SHIFT) { axisLock = true; }
     }
 
     private void processKeyReleased(KeyEvent e) {
-        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-        System.out.print("Key Released: " + e.getKeyCode());
+        if (e.getKeyCode() == KeyEvent.VK_SHIFT) { axisLock = false; axisLockDir = State.NO_AXIS; }
     }
 
     private void processMousePressed(MouseEvent e) {

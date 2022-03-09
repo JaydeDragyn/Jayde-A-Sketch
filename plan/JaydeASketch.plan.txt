@@ -6,6 +6,10 @@ of drawing never leaves the surface, so everything is a continuous line.
 
 A shake of the board will erase it, and we start over.
 
+And also like an actual Etch-a-Sketch, the point of drawing doesn't change when we
+shake it, so if we want to start in a specific spot, we have to go there and
+then shake the board to clear it.
+
 This is idea for what I want to work on - updating a BufferedImage object to display
 "realtime".
 
