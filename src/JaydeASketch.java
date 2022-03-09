@@ -11,9 +11,17 @@ public class JaydeASketch extends JPanel {
     }
 
     public void initialize() {
+        initPanel();
+        initFrame();
+
+    }
+
+    private void initPanel() {
         setPreferredSize(PANEL_SIZE);
         setBackground(Color.BLACK);
+    }
 
+    private void initFrame() {
         frame = new JFrame("Jayde-A-Sketch");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
