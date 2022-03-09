@@ -25,7 +25,8 @@ public class JaydeASketch extends JPanel {
     private final Color DRAW_COLOR;
     private BufferedImage drawingSurface;
     private Graphics drawingSurfacePen;
-    private Point penLocation;
+    private final Point drawingSurfaceOffset;
+    private final Point penLocation;
     private Point mouseDragOrigin;
 
     private State controlState;
@@ -36,6 +37,8 @@ public class JaydeASketch extends JPanel {
         PANEL_SIZE = new Dimension(800,600);
         SURFACE_DEFAULT = new Color(168,168,168);
         DRAW_COLOR = new Color(32,32,32);
+        drawingSurfaceOffset = new Point(0,0);
+        penLocation = new Point(PANEL_SIZE.width / 2, PANEL_SIZE.height / 2);
         controlState = State.IDLE;
     }
 
@@ -59,9 +62,32 @@ public class JaydeASketch extends JPanel {
         paintComponent(getGraphics());
     }
 
+    private void shakeDrawingSurface() {
+        drawingSurfaceOffset.x -= 8;
+        drawingSurfaceOffset.y -= 1;
+        paintComponent(getGraphics());
+
+        try { Thread.sleep(80); }  catch (InterruptedException ignored) {  }
+
+        drawingSurfaceOffset.x += 19;
+        paintComponent(getGraphics());
+
+        try { Thread.sleep(100); }  catch (InterruptedException ignored) {  }
+
+        drawingSurfaceOffset.x -= 14;
+        drawingSurfaceOffset.y += 2;
+        paintComponent(getGraphics());
+
+        try { Thread.sleep(90); }  catch (InterruptedException ignored) {  }
+
+        drawingSurfaceOffset.x += 3;
+        drawingSurfaceOffset.y -= 1;
+        initDrawingSurface();
+
+    }
+
     private void processKeyTyped(KeyEvent e) {
-        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-        System.out.print("Key Typed: '" + e.getKeyChar() + "'");
+        if (e.getKeyChar() == ' ') { shakeDrawingSurface(); }
     }
 
     private void processKeyPressed(KeyEvent e) {
@@ -125,14 +151,13 @@ public class JaydeASketch extends JPanel {
         drawingSurfacePen.setColor(SURFACE_DEFAULT);
         drawingSurfacePen.fillRect(0,0, PANEL_SIZE.width, PANEL_SIZE.height);
         drawingSurfacePen.setColor(DRAW_COLOR);
-        penLocation = new Point(PANEL_SIZE.width / 2, PANEL_SIZE.height / 2);
 
         paintComponent(getGraphics());
     }
 
     @Override
     public void paintComponent(Graphics g) {
-        g.drawImage(drawingSurface, 0, 0, null);
+        g.drawImage(drawingSurface, drawingSurfaceOffset.x, drawingSurfaceOffset.y, null);
     }
 
     private void initInterface() {
