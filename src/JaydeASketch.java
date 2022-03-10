@@ -23,13 +23,15 @@ public class JaydeASketch extends JPanel {
     private final Color BOARD_COLOR;
     private final Color DRAW_COLOR;
     private BufferedImage board;
+    private BufferedImage compositeBuffer;
+    private Graphics compositeBufferPen;
     private BufferedImage screenBuffer;
     private Graphics screenBufferPen;
     private Graphics boardPen;
     private final Point boardOffset;
     private BufferedImage penPointer;
     private final Color PEN_COLOR;
-    private final Dimension penPointerSize;
+    private final Dimension penPointerBaseSize;
     private final Point penLocation;
     private Point mouseDragOrigin;
     private State controlState;
@@ -54,7 +56,7 @@ public class JaydeASketch extends JPanel {
         DRAW_COLOR = new Color(32,32,32);
         boardOffset = new Point(0,0);
         PEN_COLOR = new Color(255,255,255);
-        penPointerSize = new Dimension(4,4);
+        penPointerBaseSize = new Dimension(4,4);
         penLocation = new Point(BOARD_SIZE.width / 2, BOARD_SIZE.height / 2);
         controlState = State.IDLE;
         axisLock = false;
@@ -135,7 +137,7 @@ public class JaydeASketch extends JPanel {
         boardOffset.x += 3;
         boardOffset.y -= 1;
         initDrawingSurfaces();
-
+        paintComponent(getGraphics());
     }
 
     private Point calculateMouseDelta(MouseEvent e) {
@@ -249,10 +251,6 @@ public class JaydeASketch extends JPanel {
         boardOffset.x =  (BOARD_SIZE.width / 2) - (focus.x * zoomLevel);
         boardOffset.y = (BOARD_SIZE.height / 2) - (focus.y * zoomLevel);
 
-        System.out.print("increaseZoom to " + zoomLevel + " - ");
-        System.out.print("focus: " + focus.x + "," + focus.y);
-        System.out.println(" boardOffset: " + boardOffset.x + "," + boardOffset.y);
-
         checkBounds();
         paintComponent(getGraphics());
     }
@@ -264,12 +262,7 @@ public class JaydeASketch extends JPanel {
         boardOffset.x =  (BOARD_SIZE.width / 2) - (focus.x * zoomLevel);
         boardOffset.y = (BOARD_SIZE.height / 2) - (focus.y * zoomLevel);
 
-        System.out.print("decreaseZoom to " + zoomLevel + " - ");
-        System.out.print("focus: " + focus.x + "," + focus.y);
-        System.out.println(" boardOffset: " + boardOffset.x + "," + boardOffset.y);
-
         checkBounds();
-
         paintComponent(getGraphics());
     }
 
@@ -290,14 +283,13 @@ public class JaydeASketch extends JPanel {
         int boardSizeZoomedX = boardOffset.x + (BOARD_SIZE.width * zoomLevel);
         int boardSizeZoomedY = boardOffset.y + (BOARD_SIZE.height * zoomLevel);
 
-        screenBufferPen.drawImage(board,
-                    boardOffset.x, boardOffset.y, boardSizeZoomedX, boardSizeZoomedY,
-                    0, 0, BOARD_SIZE.width, BOARD_SIZE.height,
-                    null);
+        compositeBufferPen.drawImage(board,0, 0, null);
 
-        screenBufferPen.drawImage(penPointer,
-                ((penLocation.x + boardOffset.x - (penPointerSize.width / 2)) * zoomLevel) + (zoomLevel / 2),
-                ((penLocation.y + boardOffset.y - (penPointerSize.height / 2)) * zoomLevel) + (zoomLevel / 2),
+        compositeBufferPen.drawImage(penPointer, penLocation.x, penLocation.y,null);
+
+        screenBufferPen.drawImage(compositeBuffer,
+                boardOffset.x, boardOffset.y, boardSizeZoomedX, boardSizeZoomedY,
+                0, 0, BOARD_SIZE.width, BOARD_SIZE.height,
                 null);
 
         g.drawImage(screenBuffer, 0, 0, null);
@@ -370,6 +362,7 @@ public class JaydeASketch extends JPanel {
         initDrawingSurfaces();
         initPenPointer();
         initInterface();
+        paintComponent(getGraphics());
     }
 
     private void initPanel() {
@@ -394,22 +387,24 @@ public class JaydeASketch extends JPanel {
         screenBufferPen = screenBuffer.getGraphics();
         screenBufferPen.setColor(BOARD_COLOR);
 
+        compositeBuffer = new BufferedImage(BOARD_SIZE.width, BOARD_SIZE.height, BufferedImage.TYPE_INT_RGB);
+        compositeBufferPen = compositeBuffer.getGraphics();
+        compositeBufferPen.setColor(BOARD_COLOR);
+
         board = new BufferedImage(BOARD_SIZE.width, BOARD_SIZE.height, BufferedImage.TYPE_INT_RGB);
         boardPen = board.getGraphics();
         boardPen.setColor(BOARD_COLOR);
         boardPen.fillRect(0,0, BOARD_SIZE.width, BOARD_SIZE.height);
         boardPen.setColor(DRAW_COLOR);
-
-        paintComponent(getGraphics());
     }
 
     private void initPenPointer() {
-        penPointer = new BufferedImage(penPointerSize.width, penPointerSize.height,BufferedImage.TYPE_INT_RGB);
+        penPointer = new BufferedImage(penPointerBaseSize.width, penPointerBaseSize.height, BufferedImage.TYPE_INT_RGB);
         Graphics g = penPointer.getGraphics();
         g.setColor(BOARD_COLOR);
-        g.fillRect(0,0, penPointerSize.width, penPointerSize.height);
+        g.fillRect(0,0, penPointerBaseSize.width, penPointerBaseSize.height);
         g.setColor(PEN_COLOR);
-        g.fillOval(penPointerSize.width / 2, penPointerSize.height / 2, penPointerSize.width, penPointerSize.height);
+        g.fillRect(0, 0, penPointerBaseSize.width / 2, penPointerBaseSize.height / 2);
         g.dispose();
     }
 
