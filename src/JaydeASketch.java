@@ -30,6 +30,7 @@ public class JaydeASketch extends JPanel {
     private final Color PEN_COLOR;
     private final Dimension PEN_POINTER_SIZE;
     private final Point penLocation;
+    private Point penVisibleLocation;
     private Point mouseDragOrigin;
     private State controlState;
     private boolean axisLock;
@@ -54,6 +55,7 @@ public class JaydeASketch extends JPanel {
         PEN_COLOR = new Color(255,255,255);
         PEN_POINTER_SIZE = new Dimension(4,4);
         penLocation = new Point(PANEL_SIZE.width / 2, PANEL_SIZE.height / 2);
+        penVisibleLocation = new Point(penLocation);
         controlState = State.IDLE;
         axisLock = false;
         axisLockDir = State.NO_AXIS;
@@ -69,8 +71,7 @@ public class JaydeASketch extends JPanel {
 
     private void dragPen(MouseEvent e) {
         Point mouseDelta = calculateMouseDelta(e);
-
-        Point startingPenLocation = new Point(penLocation);
+        Point penStartingLocation = new Point(penLocation);
         penLocation.x += mouseDelta.x;
         penLocation.y += mouseDelta.y;
         mouseDragOrigin.x = e.getX();
@@ -81,7 +82,10 @@ public class JaydeASketch extends JPanel {
         if (penLocation.y < 0) { penLocation.y = 0; }
         if (penLocation.y > PANEL_SIZE.height) { penLocation.y = PANEL_SIZE.height; }
 
-        drawingSurfacePen.drawLine(startingPenLocation.x, startingPenLocation.y, penLocation.x, penLocation.y);
+        penVisibleLocation.x += penLocation.x - penStartingLocation.x;
+        penVisibleLocation.y += penLocation.y - penStartingLocation.y;
+
+        drawingSurfacePen.drawLine(penStartingLocation.x, penStartingLocation.y, penLocation.x, penLocation.y);
 
         paintComponent(getGraphics());
     }
@@ -89,9 +93,6 @@ public class JaydeASketch extends JPanel {
     private void dragDrawingSurface(MouseEvent e) {
         Point mouseDelta = calculateMouseDelta(e);
         Point drawingSurfaceOffsetOrigin = new Point(drawingSurfaceOffset);
-
-        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-        System.out.print("surface origin: " + drawingSurfaceOffsetOrigin.x + "," + drawingSurfaceOffsetOrigin.y);
 
         drawingSurfaceOffset.x += mouseDelta.x;
         drawingSurfaceOffset.y += mouseDelta.y;
@@ -112,16 +113,12 @@ public class JaydeASketch extends JPanel {
             drawingSurfaceOffset.y = PANEL_SIZE.height - drawingSurfaceZoomedSize.height;
         }
 
-        System.out.print(" new surface: " + drawingSurfaceOffset.x + "," + drawingSurfaceOffset.y);
-
         Point drawingSurfaceOffsetDelta = new Point();
         drawingSurfaceOffsetDelta.x = drawingSurfaceOffset.x - drawingSurfaceOffsetOrigin.x;
         drawingSurfaceOffsetDelta.y = drawingSurfaceOffset.y - drawingSurfaceOffsetOrigin.y;
 
-        System.out.print(" delta: " + drawingSurfaceOffsetDelta.x + "," + drawingSurfaceOffsetDelta.y);
-
-        penLocation.x += drawingSurfaceOffsetDelta.x;
-        penLocation.y += drawingSurfaceOffsetDelta.y;
+        penVisibleLocation.x += drawingSurfaceOffsetDelta.x;
+        penVisibleLocation.y += drawingSurfaceOffsetDelta.y;
 
         paintComponent(getGraphics());
     }
@@ -164,7 +161,7 @@ public class JaydeASketch extends JPanel {
         // The mouse delta is usually 1,0 or 0,1, so fine control will accumulate
         // deltas until we hit the FINE_CONTROL_LEVEL, and then we will move in
         // the direction accumulated and reset that direction.  This way we can
-        // reduce how far the pointer travels, and doing this before other
+        // reduce how far the thing travels, and doing this before other
         // controls will also reduce how fast they accumulate deltas.
         fineControlAccumulator.width += Math.abs(delta.x);
         fineControlAccumulator.height += Math.abs(delta.y);
@@ -186,7 +183,7 @@ public class JaydeASketch extends JPanel {
         if (!axisLock) { return; }
 
         // The mouse delta is usually 1,0 or 0,1, so to give the user a chance to choose
-        // the direction without getting stuck due to single-pixel mouse precision,
+        // the direction without getting stuck due to lack of single-pixel mouse precision,
         // we'll ignore a few pixels of movement (AXIS_LOCK_THRESHOLD) while we accumulate
         // the deltas for those pixels.
         // When we have accumulated enough data, we choose which direction to lock based on
@@ -284,6 +281,9 @@ public class JaydeASketch extends JPanel {
             controlState = State.PANNING;
             mouseDragOrigin = new Point(e.getX(), e.getY());
         }
+//        if (e.getButton() == MouseEvent.BUTTON2) {
+//            resetZoom();
+//        }
     }
 
     private void processMouseReleased(MouseEvent e) {
@@ -304,7 +304,7 @@ public class JaydeASketch extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         g.drawImage(drawingSurface, drawingSurfaceOffset.x, drawingSurfaceOffset.y, null);
-        g.drawImage(penPointer, penLocation.x - (PEN_POINTER_SIZE.width / 2), penLocation.y - (PEN_POINTER_SIZE.height / 2), null);
+        g.drawImage(penPointer, penVisibleLocation.x - (PEN_POINTER_SIZE.width / 2), penVisibleLocation.y - (PEN_POINTER_SIZE.height / 2), null);
     }
 
     public void initialize() {
