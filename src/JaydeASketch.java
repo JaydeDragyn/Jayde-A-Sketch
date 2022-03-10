@@ -5,7 +5,7 @@ import java.awt.image.*;
 
 public class JaydeASketch extends JPanel {
 
-    private enum State {
+    private enum States {
         // Control states
         IDLE,               // No mouse button pressed
         DRAWING,            // LMB held, so moving the pen around
@@ -34,9 +34,9 @@ public class JaydeASketch extends JPanel {
     private final Dimension penPointerBaseSize;
     private final Point penLocation;
     private Point mouseDragOrigin;
-    private State controlState;
+    private States controlState;
     private boolean axisLock;
-    private State axisLockDir;
+    private States axisLockDir;
     private final int AXIS_LOCK_THRESHOLD;
     private Dimension axisLockAccumulator;
     private boolean fineControl;
@@ -58,9 +58,9 @@ public class JaydeASketch extends JPanel {
         PEN_COLOR = new Color(255,255,255);
         penPointerBaseSize = new Dimension(4,4);
         penLocation = new Point(BOARD_SIZE.width / 2, BOARD_SIZE.height / 2);
-        controlState = State.IDLE;
+        controlState = States.IDLE;
         axisLock = false;
-        axisLockDir = State.NO_AXIS;
+        axisLockDir = States.NO_AXIS;
         AXIS_LOCK_THRESHOLD = 5;
         axisLockAccumulator = new Dimension(0,0);
         fineControl = false;
@@ -74,13 +74,14 @@ public class JaydeASketch extends JPanel {
     }
 
     private void dragPen(MouseEvent e) {
-        Point mouseDelta = calculateMouseDelta(e);
         Point penLocationPrev = new Point(penLocation);
+        Point mouseDelta = calculateMouseDelta(e);
         penLocation.x += mouseDelta.x;
         penLocation.y += mouseDelta.y;
         mouseDragOrigin.x = e.getX();
         mouseDragOrigin.y = e.getY();
 
+        // bounds checking
         if (penLocation.x < 0) { penLocation.x = 0; }
         if (penLocation.x > BOARD_SIZE.width) { penLocation.x = BOARD_SIZE.width -1; }
         if (penLocation.y < 0) { penLocation.y = 0; }
@@ -182,24 +183,24 @@ public class JaydeASketch extends JPanel {
         // When we have accumulated enough data, we choose which direction to lock based on
         // which direction the user moved the mouse the furthest
         // Accumulator resets when the user releases Shift, so we're locked until then
-        if (axisLockDir == State.NO_AXIS) {
+        if (axisLockDir == States.NO_AXIS) {
             axisLockAccumulator.width += Math.abs(delta.x);
             axisLockAccumulator.height += Math.abs(delta.y);
 
             if (Math.abs(axisLockAccumulator.width - axisLockAccumulator.height) >= AXIS_LOCK_THRESHOLD) {
                 if (axisLockAccumulator.width < axisLockAccumulator.height)
-                    axisLockDir = State.VERTICAL_AXIS;
+                    axisLockDir = States.VERTICAL_AXIS;
                 else
-                    axisLockDir = State.HORIZONTAL_AXIS;
+                    axisLockDir = States.HORIZONTAL_AXIS;
             } else {
                 delta.x = 0;    // still accumulating data, ignore this movement
                 delta.y = 0;
             }
         }
 
-        if (axisLockDir == State.HORIZONTAL_AXIS)
+        if (axisLockDir == States.HORIZONTAL_AXIS)
             delta.y = 0;
-        if (axisLockDir == State.VERTICAL_AXIS)
+        if (axisLockDir == States.VERTICAL_AXIS)
             delta.x = 0;
     }
 
@@ -312,7 +313,7 @@ public class JaydeASketch extends JPanel {
     private void processKeyReleased(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
             axisLock = false;
-            axisLockDir = State.NO_AXIS;
+            axisLockDir = States.NO_AXIS;
             axisLockAccumulator = new Dimension(0,0);
         }
         if (e.getKeyCode() == KeyEvent.VK_ALT) {
@@ -326,13 +327,13 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processMousePressed(MouseEvent e) {
-        if (controlState != State.IDLE) { return; }
+        if (controlState != States.IDLE) { return; }
         if (e.getButton() == MouseEvent.BUTTON1) {
-            controlState = State.DRAWING;
+            controlState = States.DRAWING;
             mouseDragOrigin = new Point(e.getX(), e.getY());
         }
         if (e.getButton() == MouseEvent.BUTTON3) {
-            controlState = State.PANNING;
+            controlState = States.PANNING;
             mouseDragOrigin = new Point(e.getX(), e.getY());
         }
         if (e.getButton() == MouseEvent.BUTTON2) {
@@ -341,17 +342,17 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processMouseReleased(MouseEvent e) {
-        if (controlState == State.DRAWING && e.getButton() == MouseEvent.BUTTON1) { controlState = State.IDLE; }
-        if (controlState == State.PANNING && e.getButton() == MouseEvent.BUTTON3) { controlState = State.IDLE; }
+        if (controlState == States.DRAWING && e.getButton() == MouseEvent.BUTTON1) { controlState = States.IDLE; }
+        if (controlState == States.PANNING && e.getButton() == MouseEvent.BUTTON3) { controlState = States.IDLE; }
     }
 
     private void processMouseDragged(MouseEvent e) {
-        if (controlState == State.DRAWING) { dragPen(e); }
-        if (controlState == State.PANNING) { dragDrawingSurface(e); }
+        if (controlState == States.DRAWING) { dragPen(e); }
+        if (controlState == States.PANNING) { dragDrawingSurface(e); }
     }
 
     private void processMouseWheelMoved(MouseWheelEvent e) {
-        if (controlState != State.IDLE) { return; }
+        if (controlState != States.IDLE) { return; }
         if (e.getWheelRotation() < 0) { increaseZoom(new Point(penLocation.x, penLocation.y)); }
         if (e.getWheelRotation() > 0) { decreaseZoom(new Point(penLocation.x, penLocation.y)); }
     }
