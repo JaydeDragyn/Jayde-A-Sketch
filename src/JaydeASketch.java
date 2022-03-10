@@ -9,7 +9,7 @@ public class JaydeASketch extends JPanel {
         // Control states
         IDLE,               // No mouse button pressed
         DRAWING,            // LMB held, so moving the pen around
-//        PANNING,            // RMB held, so panning the image around
+        PANNING,            // RMB held, so panning the image around
 
         // Axis lock
         NO_AXIS,
@@ -25,6 +25,7 @@ public class JaydeASketch extends JPanel {
     private BufferedImage drawingSurface;
     private Graphics drawingSurfacePen;
     private final Point drawingSurfaceOffset;
+    private Dimension drawingSurfaceZoomedSize;
     private BufferedImage penPointer;
     private final Color PEN_COLOR;
     private final Dimension PEN_POINTER_SIZE;
@@ -49,6 +50,7 @@ public class JaydeASketch extends JPanel {
         SURFACE_DEFAULT = new Color(168,168,168);
         DRAW_COLOR = new Color(32,32,32);
         drawingSurfaceOffset = new Point(0,0);
+        drawingSurfaceZoomedSize = new Dimension(PANEL_SIZE.width, PANEL_SIZE.height);
         PEN_COLOR = new Color(255,255,255);
         PEN_POINTER_SIZE = new Dimension(4,4);
         penLocation = new Point(PANEL_SIZE.width / 2, PANEL_SIZE.height / 2);
@@ -80,6 +82,46 @@ public class JaydeASketch extends JPanel {
         if (penLocation.y > PANEL_SIZE.height) { penLocation.y = PANEL_SIZE.height; }
 
         drawingSurfacePen.drawLine(startingPenLocation.x, startingPenLocation.y, penLocation.x, penLocation.y);
+
+        paintComponent(getGraphics());
+    }
+
+    private void dragDrawingSurface(MouseEvent e) {
+        Point mouseDelta = calculateMouseDelta(e);
+        Point drawingSurfaceOffsetOrigin = new Point(drawingSurfaceOffset);
+
+        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        System.out.print("surface origin: " + drawingSurfaceOffsetOrigin.x + "," + drawingSurfaceOffsetOrigin.y);
+
+        drawingSurfaceOffset.x += mouseDelta.x;
+        drawingSurfaceOffset.y += mouseDelta.y;
+        mouseDragOrigin.x = e.getX();
+        mouseDragOrigin.y = e.getY();
+
+        // bounds checking
+        if (drawingSurfaceOffset.x > 0) {
+            drawingSurfaceOffset.x = 0;
+        }
+        if ((drawingSurfaceOffset.x + drawingSurfaceZoomedSize.width) < PANEL_SIZE.width) {
+            drawingSurfaceOffset.x = PANEL_SIZE.width - drawingSurfaceZoomedSize.width;
+        }
+        if (drawingSurfaceOffset.y > 0) {
+            drawingSurfaceOffset.y = 0;
+        }
+        if ((drawingSurfaceOffset.y + drawingSurfaceZoomedSize.height) < PANEL_SIZE.height) {
+            drawingSurfaceOffset.y = PANEL_SIZE.height - drawingSurfaceZoomedSize.height;
+        }
+
+        System.out.print(" new surface: " + drawingSurfaceOffset.x + "," + drawingSurfaceOffset.y);
+
+        Point drawingSurfaceOffsetDelta = new Point();
+        drawingSurfaceOffsetDelta.x = drawingSurfaceOffset.x - drawingSurfaceOffsetOrigin.x;
+        drawingSurfaceOffsetDelta.y = drawingSurfaceOffset.y - drawingSurfaceOffsetOrigin.y;
+
+        System.out.print(" delta: " + drawingSurfaceOffsetDelta.x + "," + drawingSurfaceOffsetDelta.y);
+
+        penLocation.x += drawingSurfaceOffsetDelta.x;
+        penLocation.y += drawingSurfaceOffsetDelta.y;
 
         paintComponent(getGraphics());
     }
@@ -238,14 +280,20 @@ public class JaydeASketch extends JPanel {
             controlState = State.DRAWING;
             mouseDragOrigin = new Point(e.getX(), e.getY());
         }
+        if (e.getButton() == MouseEvent.BUTTON3) {
+            controlState = State.PANNING;
+            mouseDragOrigin = new Point(e.getX(), e.getY());
+        }
     }
 
     private void processMouseReleased(MouseEvent e) {
         if (controlState == State.DRAWING && e.getButton() == MouseEvent.BUTTON1) { controlState = State.IDLE; }
+        if (controlState == State.PANNING && e.getButton() == MouseEvent.BUTTON3) { controlState = State.IDLE; }
     }
 
     private void processMouseDragged(MouseEvent e) {
         if (controlState == State.DRAWING) { dragPen(e); }
+        if (controlState == State.PANNING) { dragDrawingSurface(e); }
     }
 
     private void processMouseWheelMoved(MouseWheelEvent e) {
@@ -276,6 +324,7 @@ public class JaydeASketch extends JPanel {
         JFrame frame = new JFrame("Jayde-A-Sketch");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
+        frame.setBackground(Color.BLACK);
         frame.add(this);
         frame.pack();
         frame.setVisible(true);

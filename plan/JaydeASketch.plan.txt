@@ -28,4 +28,25 @@ with straight sections if they want by repeatedly holding and releasing shift wh
 they drag with LMB.
 
 
+---
+
+Got drawing to work with mouse input.  Think I'll skip arrow keys and go on to zooming and panning.
+
+Some ground rules for zoom and pan:
+
+The drawing panel should never come inside the window from the edge.
+    If we are zoomed out all the way, the drawing panel should fill the entire window.
+    If we zoom in, the window should always contain the drawing panel, no empty space.
+
+So, left edge of the drawing panel should never move right to more than 0,
+right edge of the drawing panel should never move left to more than PANEL SIZE,
+top edge should never move down below 0
+bottom edgeg should never move up above PANEL SIZE
+
+We need to keep this in mind when we zoom in/out as well.
+When we zoom in, everything is going to expand, so just keep track of leftBias as we've been.
+When we zoom out, keep track of leftBias, but snap to edges as necessary.
+
+Panning around should use the same methods as dragging the pen, we're just dragging the
+panel instead.
 
