@@ -38,6 +38,9 @@ public class JaydeASketch extends JPanel {
     private boolean fineControl;
     private final int FINE_CONTROL_LEVEL;
     private Dimension fineControlAccumulator;
+    private boolean snapToGrid;
+    private final int GRID_SIZE;
+    private Dimension snapToGridAccumulator;
 
     // Member Methods ---------------------------------------------------------
 
@@ -57,12 +60,59 @@ public class JaydeASketch extends JPanel {
         fineControl = false;
         FINE_CONTROL_LEVEL = 5;
         fineControlAccumulator = new Dimension(0,0);
+        snapToGrid = false;
+        GRID_SIZE = 50;
+        snapToGridAccumulator = new Dimension(0,0);
+    }
+
+    private void dragPen(MouseEvent e) {
+        Point mouseDelta = calculateMouseDelta(e);
+
+        Point startingPenLocation = new Point(penLocation);
+        penLocation.x += mouseDelta.x;
+        penLocation.y += mouseDelta.y;
+        mouseDragOrigin.x = e.getX();
+        mouseDragOrigin.y = e.getY();
+
+        if (penLocation.x < 0) { penLocation.x = 0; }
+        if (penLocation.x > PANEL_SIZE.width) { penLocation.x = PANEL_SIZE.width; }
+        if (penLocation.y < 0) { penLocation.y = 0; }
+        if (penLocation.y > PANEL_SIZE.height) { penLocation.y = PANEL_SIZE.height; }
+
+        drawingSurfacePen.drawLine(startingPenLocation.x, startingPenLocation.y, penLocation.x, penLocation.y);
+
+        paintComponent(getGraphics());
+    }
+
+    private void shakeDrawingSurface() {
+        drawingSurfaceOffset.x -= 8;
+        drawingSurfaceOffset.y -= 1;
+        paintComponent(getGraphics());
+
+        try { Thread.sleep(80); }  catch (InterruptedException ignored) {  }
+
+        drawingSurfaceOffset.x += 19;
+        paintComponent(getGraphics());
+
+        try { Thread.sleep(100); }  catch (InterruptedException ignored) {  }
+
+        drawingSurfaceOffset.x -= 14;
+        drawingSurfaceOffset.y += 2;
+        paintComponent(getGraphics());
+
+        try { Thread.sleep(90); }  catch (InterruptedException ignored) {  }
+
+        drawingSurfaceOffset.x += 3;
+        drawingSurfaceOffset.y -= 1;
+        initDrawingSurface();
+
     }
 
     private Point calculateMouseDelta(MouseEvent e) {
         Point mouseDelta = new Point(e.getX() - mouseDragOrigin.x, e.getY() - mouseDragOrigin.y);
         adjustForFineControl(mouseDelta);
         adjustForAxisLock(mouseDelta);
+        adjustForSnapToGrid(mouseDelta);
         return mouseDelta;
     }
 
@@ -70,7 +120,7 @@ public class JaydeASketch extends JPanel {
         if (!fineControl) { return; }
 
         // The mouse delta is usually 1,0 or 0,1, so fine control will accumulate
-        // deltas until we hit the FINE_CONTROL_LEVEL, and then we will delta in
+        // deltas until we hit the FINE_CONTROL_LEVEL, and then we will move in
         // the direction accumulated and reset that direction.  This way we can
         // reduce how far the pointer travels, and doing this before other
         // controls will also reduce how fast they accumulate deltas.
@@ -121,46 +171,37 @@ public class JaydeASketch extends JPanel {
             delta.x = 0;
     }
 
-    private void dragPen(MouseEvent e) {
-        Point mouseDelta = calculateMouseDelta(e);
+    private void adjustForSnapToGrid(Point delta) {
+        if (!snapToGrid) { return; }
 
-        Point startingPenLocation = new Point(penLocation);
-        penLocation.x += mouseDelta.x;
-        penLocation.y += mouseDelta.y;
-        mouseDragOrigin.x = e.getX();
-        mouseDragOrigin.y = e.getY();
+        // The mouse delta is usually 1,0 or 0,1, so snapping to grid will
+        // accumulate deltas until we hit the GRID_SIZE for a direction,
+        // and then we'll calculate the nearest imaginary grid point and snap
+        // to that.
+        snapToGridAccumulator.width += delta.x;
+        snapToGridAccumulator.height += delta.y;
 
-        if (penLocation.x < 0) { penLocation.x = 0; }
-        if (penLocation.x > PANEL_SIZE.width) { penLocation.x = PANEL_SIZE.width; }
-        if (penLocation.y < 0) { penLocation.y = 0; }
-        if (penLocation.y > PANEL_SIZE.height) { penLocation.y = PANEL_SIZE.height; }
+        if (Math.abs(snapToGridAccumulator.width) < GRID_SIZE) {
+            delta.x = 0;
+        } else {
+            if (snapToGridAccumulator.width < 0) {
+                delta.x = (GRID_SIZE + (penLocation.x % GRID_SIZE)) * -1;
+            } else {
+                delta.x = GRID_SIZE - (penLocation.x % GRID_SIZE);
+            }
+            snapToGridAccumulator.width = 0;
+        }
 
-        drawingSurfacePen.drawLine(startingPenLocation.x, startingPenLocation.y, penLocation.x, penLocation.y);
-
-        paintComponent(getGraphics());
-    }
-
-    private void shakeDrawingSurface() {
-        drawingSurfaceOffset.x -= 8;
-        drawingSurfaceOffset.y -= 1;
-        paintComponent(getGraphics());
-
-        try { Thread.sleep(80); }  catch (InterruptedException ignored) {  }
-
-        drawingSurfaceOffset.x += 19;
-        paintComponent(getGraphics());
-
-        try { Thread.sleep(100); }  catch (InterruptedException ignored) {  }
-
-        drawingSurfaceOffset.x -= 14;
-        drawingSurfaceOffset.y += 2;
-        paintComponent(getGraphics());
-
-        try { Thread.sleep(90); }  catch (InterruptedException ignored) {  }
-
-        drawingSurfaceOffset.x += 3;
-        drawingSurfaceOffset.y -= 1;
-        initDrawingSurface();
+        if (Math.abs(snapToGridAccumulator.height) < GRID_SIZE) {
+            delta.y = 0;
+        } else {
+            if (snapToGridAccumulator.height < 0) {
+                delta.y = (GRID_SIZE + (penLocation.y % GRID_SIZE)) * -1;
+            } else {
+                delta.y = GRID_SIZE - (penLocation.y % GRID_SIZE);
+            }
+            snapToGridAccumulator.height = 0;
+        }
 
     }
 
@@ -172,6 +213,7 @@ public class JaydeASketch extends JPanel {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) { System.exit(0); }
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) { axisLock = true; }
         if (e.getKeyCode() == KeyEvent.VK_ALT) { fineControl = true; }
+        if (e.getKeyCode() == KeyEvent.VK_CONTROL) { snapToGrid = true; }
     }
 
     private void processKeyReleased(KeyEvent e) {
@@ -183,6 +225,10 @@ public class JaydeASketch extends JPanel {
         if (e.getKeyCode() == KeyEvent.VK_ALT) {
             fineControl = false;
             fineControlAccumulator = new Dimension(0,0);
+        }
+        if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
+            snapToGrid = false;
+            snapToGridAccumulator = new Dimension(0,0);
         }
     }
 
