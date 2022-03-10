@@ -19,18 +19,18 @@ public class JaydeASketch extends JPanel {
 
     // Member Data ------------------------------------------------------------
 
-    private final Dimension PANEL_SIZE;
-    private final Color SURFACE_DEFAULT;
+    private final Dimension BOARD_SIZE;
+    private final Color BOARD_COLOR;
     private final Color DRAW_COLOR;
-    private BufferedImage drawingSurface;
-    private Graphics drawingSurfacePen;
-    private final Point drawingSurfaceOffset;
-    private Dimension drawingSurfaceZoomedSize;
+    private BufferedImage board;
+    private BufferedImage screenBuffer;
+    private Graphics screenBufferPen;
+    private Graphics boardPen;
+    private final Point boardOffset;
     private BufferedImage penPointer;
     private final Color PEN_COLOR;
-    private final Dimension PEN_POINTER_SIZE;
+    private final Dimension penPointerSize;
     private final Point penLocation;
-    private Point penVisibleLocation;
     private Point mouseDragOrigin;
     private State controlState;
     private boolean axisLock;
@@ -43,19 +43,19 @@ public class JaydeASketch extends JPanel {
     private boolean snapToGrid;
     private final int GRID_SIZE;
     private Dimension snapToGridAccumulator;
+    private int zoomLevel;
+    private final int ZOOM_MAX_LEVEL;
 
     // Member Methods ---------------------------------------------------------
 
     public JaydeASketch() {
-        PANEL_SIZE = new Dimension(800,600);
-        SURFACE_DEFAULT = new Color(168,168,168);
+        BOARD_SIZE = new Dimension(800,600);
+        BOARD_COLOR = new Color(168,168,168);
         DRAW_COLOR = new Color(32,32,32);
-        drawingSurfaceOffset = new Point(0,0);
-        drawingSurfaceZoomedSize = new Dimension(PANEL_SIZE.width, PANEL_SIZE.height);
+        boardOffset = new Point(0,0);
         PEN_COLOR = new Color(255,255,255);
-        PEN_POINTER_SIZE = new Dimension(4,4);
-        penLocation = new Point(PANEL_SIZE.width / 2, PANEL_SIZE.height / 2);
-        penVisibleLocation = new Point(penLocation);
+        penPointerSize = new Dimension(4,4);
+        penLocation = new Point(BOARD_SIZE.width / 2, BOARD_SIZE.height / 2);
         controlState = State.IDLE;
         axisLock = false;
         axisLockDir = State.NO_AXIS;
@@ -67,83 +67,74 @@ public class JaydeASketch extends JPanel {
         snapToGrid = false;
         GRID_SIZE = 50;
         snapToGridAccumulator = new Dimension(0,0);
+        zoomLevel = 1;
+        ZOOM_MAX_LEVEL = 10;
     }
 
     private void dragPen(MouseEvent e) {
         Point mouseDelta = calculateMouseDelta(e);
-        Point penStartingLocation = new Point(penLocation);
+        Point penLocationPrev = new Point(penLocation);
         penLocation.x += mouseDelta.x;
         penLocation.y += mouseDelta.y;
         mouseDragOrigin.x = e.getX();
         mouseDragOrigin.y = e.getY();
 
         if (penLocation.x < 0) { penLocation.x = 0; }
-        if (penLocation.x > PANEL_SIZE.width) { penLocation.x = PANEL_SIZE.width; }
+        if (penLocation.x > BOARD_SIZE.width) { penLocation.x = BOARD_SIZE.width -1; }
         if (penLocation.y < 0) { penLocation.y = 0; }
-        if (penLocation.y > PANEL_SIZE.height) { penLocation.y = PANEL_SIZE.height; }
+        if (penLocation.y > BOARD_SIZE.height) { penLocation.y = BOARD_SIZE.height -1; }
 
-        penVisibleLocation.x += penLocation.x - penStartingLocation.x;
-        penVisibleLocation.y += penLocation.y - penStartingLocation.y;
-
-        drawingSurfacePen.drawLine(penStartingLocation.x, penStartingLocation.y, penLocation.x, penLocation.y);
+        boardPen.drawLine(penLocationPrev.x, penLocationPrev.y, penLocation.x, penLocation.y);
 
         paintComponent(getGraphics());
     }
 
     private void dragDrawingSurface(MouseEvent e) {
         Point mouseDelta = calculateMouseDelta(e);
-        Point drawingSurfaceOffsetOrigin = new Point(drawingSurfaceOffset);
 
-        drawingSurfaceOffset.x += mouseDelta.x;
-        drawingSurfaceOffset.y += mouseDelta.y;
+        boardOffset.x += mouseDelta.x;
+        boardOffset.y += mouseDelta.y;
         mouseDragOrigin.x = e.getX();
         mouseDragOrigin.y = e.getY();
 
         // bounds checking
-        if (drawingSurfaceOffset.x > 0) {
-            drawingSurfaceOffset.x = 0;
+        if (boardOffset.x > 0) {
+            boardOffset.x = 0;
         }
-        if ((drawingSurfaceOffset.x + drawingSurfaceZoomedSize.width) < PANEL_SIZE.width) {
-            drawingSurfaceOffset.x = PANEL_SIZE.width - drawingSurfaceZoomedSize.width;
+        if ((boardOffset.x + (BOARD_SIZE.width * zoomLevel)) < BOARD_SIZE.width) {
+            boardOffset.x = BOARD_SIZE.width - (BOARD_SIZE.width * zoomLevel);
         }
-        if (drawingSurfaceOffset.y > 0) {
-            drawingSurfaceOffset.y = 0;
+        if (boardOffset.y > 0) {
+            boardOffset.y = 0;
         }
-        if ((drawingSurfaceOffset.y + drawingSurfaceZoomedSize.height) < PANEL_SIZE.height) {
-            drawingSurfaceOffset.y = PANEL_SIZE.height - drawingSurfaceZoomedSize.height;
+        if ((boardOffset.y + (BOARD_SIZE.height * zoomLevel)) < BOARD_SIZE.height) {
+            boardOffset.y = BOARD_SIZE.height - (BOARD_SIZE.height * zoomLevel);
         }
-
-        Point drawingSurfaceOffsetDelta = new Point();
-        drawingSurfaceOffsetDelta.x = drawingSurfaceOffset.x - drawingSurfaceOffsetOrigin.x;
-        drawingSurfaceOffsetDelta.y = drawingSurfaceOffset.y - drawingSurfaceOffsetOrigin.y;
-
-        penVisibleLocation.x += drawingSurfaceOffsetDelta.x;
-        penVisibleLocation.y += drawingSurfaceOffsetDelta.y;
 
         paintComponent(getGraphics());
     }
 
     private void shakeDrawingSurface() {
-        drawingSurfaceOffset.x -= 8;
-        drawingSurfaceOffset.y -= 1;
+        boardOffset.x -= 8;
+        boardOffset.y -= 1;
         paintComponent(getGraphics());
 
         try { Thread.sleep(80); }  catch (InterruptedException ignored) {  }
 
-        drawingSurfaceOffset.x += 19;
+        boardOffset.x += 19;
         paintComponent(getGraphics());
 
         try { Thread.sleep(100); }  catch (InterruptedException ignored) {  }
 
-        drawingSurfaceOffset.x -= 14;
-        drawingSurfaceOffset.y += 2;
+        boardOffset.x -= 14;
+        boardOffset.y += 2;
         paintComponent(getGraphics());
 
         try { Thread.sleep(90); }  catch (InterruptedException ignored) {  }
 
-        drawingSurfaceOffset.x += 3;
-        drawingSurfaceOffset.y -= 1;
-        initDrawingSurface();
+        boardOffset.x += 3;
+        boardOffset.y -= 1;
+        initDrawingSurfaces();
 
     }
 
@@ -241,11 +232,82 @@ public class JaydeASketch extends JPanel {
             }
             snapToGridAccumulator.height = 0;
         }
+    }
 
+    private void resetZoom() {
+        zoomLevel = 1;
+        boardOffset.x = 0;
+        boardOffset.y = 0;
+
+        paintComponent(getGraphics());
+    }
+
+    private void increaseZoom(Point focus) {
+        if (zoomLevel >= ZOOM_MAX_LEVEL) { return; }
+        zoomLevel++;
+        // calculate new center point
+        boardOffset.x =  (BOARD_SIZE.width / 2) - (focus.x * zoomLevel);
+        boardOffset.y = (BOARD_SIZE.height / 2) - (focus.y * zoomLevel);
+
+        System.out.print("increaseZoom to " + zoomLevel + " - ");
+        System.out.print("focus: " + focus.x + "," + focus.y);
+        System.out.println(" boardOffset: " + boardOffset.x + "," + boardOffset.y);
+
+        checkBounds();
+        paintComponent(getGraphics());
+    }
+
+    private void decreaseZoom(Point focus) {
+        if (zoomLevel == 1) { return; }
+        zoomLevel--;
+        // calculate new center point
+        boardOffset.x =  (BOARD_SIZE.width / 2) - (focus.x * zoomLevel);
+        boardOffset.y = (BOARD_SIZE.height / 2) - (focus.y * zoomLevel);
+
+        System.out.print("decreaseZoom to " + zoomLevel + " - ");
+        System.out.print("focus: " + focus.x + "," + focus.y);
+        System.out.println(" boardOffset: " + boardOffset.x + "," + boardOffset.y);
+
+        checkBounds();
+
+        paintComponent(getGraphics());
+    }
+
+    private void checkBounds() {
+        // push back in-bounds if necessary
+        if (boardOffset.x > 0) { boardOffset.x = 0; }
+        if ((boardOffset.x + BOARD_SIZE.width * zoomLevel) < BOARD_SIZE.width) {
+            boardOffset.x = BOARD_SIZE.width - (BOARD_SIZE.width * zoomLevel);
+        }
+        if (boardOffset.y > 0) { boardOffset.y = 0; }
+        if ((boardOffset.y + BOARD_SIZE.height * zoomLevel) < BOARD_SIZE.height) {
+            boardOffset.y = BOARD_SIZE.height - (BOARD_SIZE.height * zoomLevel);
+        }
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+        int boardSizeZoomedX = boardOffset.x + (BOARD_SIZE.width * zoomLevel);
+        int boardSizeZoomedY = boardOffset.y + (BOARD_SIZE.height * zoomLevel);
+
+        screenBufferPen.drawImage(board,
+                    boardOffset.x, boardOffset.y, boardSizeZoomedX, boardSizeZoomedY,
+                    0, 0, BOARD_SIZE.width, BOARD_SIZE.height,
+                    null);
+
+        screenBufferPen.drawImage(penPointer,
+                ((penLocation.x + boardOffset.x - (penPointerSize.width / 2)) * zoomLevel) + (zoomLevel / 2),
+                ((penLocation.y + boardOffset.y - (penPointerSize.height / 2)) * zoomLevel) + (zoomLevel / 2),
+                null);
+
+        g.drawImage(screenBuffer, 0, 0, null);
     }
 
     private void processKeyTyped(KeyEvent e) {
         if (e.getKeyChar() == ' ') { shakeDrawingSurface(); }
+        if (e.getKeyChar() == '0') { resetZoom(); }
+        if (e.getKeyChar() == '+') { increaseZoom(new Point(penLocation.x, penLocation.y)); }
+        if (e.getKeyChar() == '-') { decreaseZoom(new Point(penLocation.x, penLocation.y)); }
     }
 
     private void processKeyPressed(KeyEvent e) {
@@ -281,9 +343,9 @@ public class JaydeASketch extends JPanel {
             controlState = State.PANNING;
             mouseDragOrigin = new Point(e.getX(), e.getY());
         }
-//        if (e.getButton() == MouseEvent.BUTTON2) {
-//            resetZoom();
-//        }
+        if (e.getButton() == MouseEvent.BUTTON2) {
+            resetZoom();
+        }
     }
 
     private void processMouseReleased(MouseEvent e) {
@@ -297,26 +359,21 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processMouseWheelMoved(MouseWheelEvent e) {
-        System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-        System.out.print("Mouse Wheel Moved: " + e.getWheelRotation());
-    }
-
-    @Override
-    public void paintComponent(Graphics g) {
-        g.drawImage(drawingSurface, drawingSurfaceOffset.x, drawingSurfaceOffset.y, null);
-        g.drawImage(penPointer, penVisibleLocation.x - (PEN_POINTER_SIZE.width / 2), penVisibleLocation.y - (PEN_POINTER_SIZE.height / 2), null);
+        if (controlState != State.IDLE) { return; }
+        if (e.getWheelRotation() < 0) { increaseZoom(new Point(penLocation.x, penLocation.y)); }
+        if (e.getWheelRotation() > 0) { decreaseZoom(new Point(penLocation.x, penLocation.y)); }
     }
 
     public void initialize() {
         initPanel();
         initFrame();
-        initDrawingSurface();
+        initDrawingSurfaces();
         initPenPointer();
         initInterface();
     }
 
     private void initPanel() {
-        setPreferredSize(PANEL_SIZE);
+        setPreferredSize(BOARD_SIZE);
         setBackground(Color.BLACK);
     }
 
@@ -332,23 +389,27 @@ public class JaydeASketch extends JPanel {
         requestFocusInWindow();
     }
 
-    private void initDrawingSurface() {
-        drawingSurface = new BufferedImage(PANEL_SIZE.width, PANEL_SIZE.height, BufferedImage.TYPE_INT_RGB);
-        drawingSurfacePen = drawingSurface.getGraphics();
-        drawingSurfacePen.setColor(SURFACE_DEFAULT);
-        drawingSurfacePen.fillRect(0,0, PANEL_SIZE.width, PANEL_SIZE.height);
-        drawingSurfacePen.setColor(DRAW_COLOR);
+    private void initDrawingSurfaces() {
+        screenBuffer = new BufferedImage(BOARD_SIZE.width, BOARD_SIZE.height, BufferedImage.TYPE_INT_RGB);
+        screenBufferPen = screenBuffer.getGraphics();
+        screenBufferPen.setColor(BOARD_COLOR);
+
+        board = new BufferedImage(BOARD_SIZE.width, BOARD_SIZE.height, BufferedImage.TYPE_INT_RGB);
+        boardPen = board.getGraphics();
+        boardPen.setColor(BOARD_COLOR);
+        boardPen.fillRect(0,0, BOARD_SIZE.width, BOARD_SIZE.height);
+        boardPen.setColor(DRAW_COLOR);
 
         paintComponent(getGraphics());
     }
 
     private void initPenPointer() {
-        penPointer = new BufferedImage(PEN_POINTER_SIZE.width,PEN_POINTER_SIZE.height,BufferedImage.TYPE_INT_RGB);
+        penPointer = new BufferedImage(penPointerSize.width, penPointerSize.height,BufferedImage.TYPE_INT_RGB);
         Graphics g = penPointer.getGraphics();
-        g.setColor(SURFACE_DEFAULT);
-        g.fillRect(0,0,PEN_POINTER_SIZE.width,PEN_POINTER_SIZE.height);
+        g.setColor(BOARD_COLOR);
+        g.fillRect(0,0, penPointerSize.width, penPointerSize.height);
         g.setColor(PEN_COLOR);
-        g.fillOval(PEN_POINTER_SIZE.width / 2, PEN_POINTER_SIZE.height / 2, PEN_POINTER_SIZE.width, PEN_POINTER_SIZE.height);
+        g.fillOval(penPointerSize.width / 2, penPointerSize.height / 2, penPointerSize.width, penPointerSize.height);
         g.dispose();
     }
 
