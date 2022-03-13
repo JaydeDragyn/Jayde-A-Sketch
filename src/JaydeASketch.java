@@ -39,13 +39,14 @@ public class JaydeASketch extends JPanel {
     private final Point penLocation;
     private Point mouseDragOrigin;
     private ControlStates controlState;
-    private boolean axisLock;
-    private AxisLock axisLockDir;
-    private final int AXIS_LOCK_THRESHOLD;
+    private Dimension zoomCompensationAccumulator;
     private Dimension axisLockAccumulator;
     private boolean fineControl;
     private final int FINE_CONTROL_LEVEL;
     private Dimension fineControlAccumulator;
+    private boolean axisLock;
+    private AxisLock axisLockDir;
+    private final int AXIS_LOCK_THRESHOLD;
     private boolean snapToGrid;
     private final int GRID_SIZE;
     private Dimension snapToGridAccumulator;
@@ -63,6 +64,7 @@ public class JaydeASketch extends JPanel {
         PEN_COLOR = new Color(255,255,255);
         penLocation = new Point(BOARD_SIZE.width / 2, BOARD_SIZE.height / 2);
         controlState = ControlStates.IDLE;
+        zoomCompensationAccumulator = new Dimension(0,0);
         axisLock = false;
         axisLockDir = AxisLock.NO_AXIS;
         AXIS_LOCK_THRESHOLD = 5;
@@ -147,10 +149,35 @@ public class JaydeASketch extends JPanel {
 
     private Point calculateMouseDelta(MouseEvent e) {
         Point mouseDelta = new Point(e.getX() - mouseDragOrigin.x, e.getY() - mouseDragOrigin.y);
+        compensateForZoom(mouseDelta);
         adjustForFineControl(mouseDelta);
         adjustForAxisLock(mouseDelta);
         adjustForSnapToGrid(mouseDelta);
         return mouseDelta;
+    }
+
+    private void compensateForZoom(Point delta) {
+        // As the user zooms in, the movement of the mouse will become exaggerated
+        // We will slow the mouse down by a factor proportional to the zoomLevel
+        // Not a perfect solution, but this, combined with Alt for fine control
+        // should make it easier to draw when zoomed in
+
+        // However, this only applies to dragging the pen.
+        if (controlState == ControlStates.PANNING) { return; }
+        zoomCompensationAccumulator.width += Math.abs(delta.x);
+        zoomCompensationAccumulator.height += Math.abs (delta.y);
+
+        if (zoomCompensationAccumulator.width > (zoomLevel -1)) {
+            zoomCompensationAccumulator.width = 0;
+        } else {
+            delta.x = 0;
+        }
+
+        if (zoomCompensationAccumulator.height > (zoomLevel -1)) {
+            zoomCompensationAccumulator.height = 0;
+        } else {
+            delta.y = 0;
+        }
     }
 
     private void adjustForFineControl(Point delta) {
@@ -243,6 +270,7 @@ public class JaydeASketch extends JPanel {
 
     private void resetZoom() {
         zoomLevel = 1;
+        zoomCompensationAccumulator = new Dimension(0,0);
         boardOffset.x = 0;
         boardOffset.y = 0;
 
@@ -252,6 +280,8 @@ public class JaydeASketch extends JPanel {
     private void increaseZoom(Point focus) {
         if (zoomLevel >= ZOOM_MAX_LEVEL) { return; }
         zoomLevel++;
+        zoomCompensationAccumulator = new Dimension(0,0);
+
         // calculate new center point
         boardOffset.x =  (BOARD_SIZE.width / 2) - (focus.x * zoomLevel);
         boardOffset.y = (BOARD_SIZE.height / 2) - (focus.y * zoomLevel);
@@ -263,6 +293,7 @@ public class JaydeASketch extends JPanel {
     private void decreaseZoom(Point focus) {
         if (zoomLevel == 1) { return; }
         zoomLevel--;
+        zoomCompensationAccumulator = new Dimension(0,0);
         // calculate new center point
         boardOffset.x =  (BOARD_SIZE.width / 2) - (focus.x * zoomLevel);
         boardOffset.y = (BOARD_SIZE.height / 2) - (focus.y * zoomLevel);
