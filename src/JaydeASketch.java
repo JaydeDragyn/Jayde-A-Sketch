@@ -390,9 +390,13 @@ public class JaydeASketch extends JPanel {
     }
 
     private void initFrame() {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        Point screenCenter = ge.getCenterPoint();
+
         JFrame frame = new JFrame("Jayde-A-Sketch");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
+        frame.setLocation(screenCenter.x - (BOARD_SIZE.width / 2), screenCenter.y - (BOARD_SIZE.height / 2));
         frame.setBackground(Color.BLACK);
         frame.add(this);
         frame.pack();
