@@ -66,7 +66,7 @@ public class JaydeASketch extends JPanel {
         FINE_CONTROL_LEVEL = 5;
         fineControlAccumulator = new Dimension(0,0);
         snapToGrid = false;
-        GRID_SIZE = 50;
+        GRID_SIZE = 10;
         snapToGridAccumulator = new Dimension(0,0);
         zoomLevel = 1;
         ZOOM_MAX_LEVEL = 10;
