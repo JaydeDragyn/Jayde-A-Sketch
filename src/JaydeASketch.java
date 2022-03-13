@@ -54,7 +54,7 @@ public class JaydeASketch extends JPanel {
         BOARD_SIZE = new Dimension(800,600);
         BOARD_COLOR = new Color(168,168,168);
         DRAW_COLOR = new Color(32,32,32);
-        GRID_COLOR = new Color(48, 48, 48);
+        GRID_COLOR = new Color(152, 152, 152);
         boardOffset = new Point(0,0);
         PEN_COLOR = new Color(255,255,255);
         penLocation = new Point(BOARD_SIZE.width / 2, BOARD_SIZE.height / 2);
