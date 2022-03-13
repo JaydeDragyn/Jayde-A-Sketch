@@ -22,6 +22,7 @@ public class JaydeASketch extends JPanel {
     private final Dimension BOARD_SIZE;
     private final Color BOARD_COLOR;
     private final Color DRAW_COLOR;
+    private final Color GRID_COLOR;
     private BufferedImage board;
     private BufferedImage compositeBuffer;
     private Graphics compositeBufferPen;
@@ -54,6 +55,7 @@ public class JaydeASketch extends JPanel {
         BOARD_SIZE = new Dimension(800,600);
         BOARD_COLOR = new Color(168,168,168);
         DRAW_COLOR = new Color(32,32,32);
+        GRID_COLOR = new Color(48, 48, 48);
         boardOffset = new Point(0,0);
         PEN_COLOR = new Color(255,255,255);
         penPointerBaseSize = new Dimension(4,4);
@@ -293,7 +295,26 @@ public class JaydeASketch extends JPanel {
                 0, 0, BOARD_SIZE.width, BOARD_SIZE.height,
                 null);
 
+        if (zoomLevel > 6) { addGridLines(); }
+
         g.drawImage(screenBuffer, 0, 0, null);
+    }
+
+    private void addGridLines() {
+        int rows = BOARD_SIZE.height / zoomLevel;
+        int cols = BOARD_SIZE.width / zoomLevel;
+        int rowOffset = (boardOffset.y % zoomLevel);
+        int colOffset = (boardOffset.x % zoomLevel);
+        screenBufferPen.setColor(GRID_COLOR);
+
+        for (int row = 1; row <= rows; ++row) {
+            int thisRow = (row * zoomLevel) + rowOffset;
+            screenBufferPen.drawLine(0, thisRow, BOARD_SIZE.width, thisRow);
+        }
+        for (int col = 1; col <= cols; ++col) {
+            int thisCol = (col * zoomLevel) + colOffset;
+            screenBufferPen.drawLine(thisCol, 0, thisCol, BOARD_SIZE.height);
+        }
     }
 
     private void processKeyTyped(KeyEvent e) {

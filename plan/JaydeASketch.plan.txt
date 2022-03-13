@@ -41,12 +41,32 @@ The drawing panel should never come inside the window from the edge.
 So, left edge of the drawing panel should never move right to more than 0,
 right edge of the drawing panel should never move left to more than PANEL SIZE,
 top edge should never move down below 0
-bottom edgeg should never move up above PANEL SIZE
+bottom edge should never move up above PANEL SIZE
 
 We need to keep this in mind when we zoom in/out as well.
 When we zoom in, everything is going to expand, so just keep track of leftBias as we've been.
-When we zoom out, keep track of leftBias, but snap to edges as necessary.
+When we zoom out, keep track of leftBias, but snap-to-edges as necessary.
 
 Panning around should use the same methods as dragging the pen, we're just dragging the
 panel instead.
+
+---
+
+Everything is working great!
+
+Now I want to add one more feature - gridlines when zoomed in far enough.  At 1:1, 2:1 or 3:1, it'll be
+too much visual noise to have grid lines.  But at 4:1 (or maybe 5:1) it will read a lot better with
+3 pixels of data and one pixel of grid line in each axis.
+
+We'll have the paintComponent check the zoom level, and after the AffineTransform onto the screen buffer,
+if we're zoomed in enough, we'll call another method to add the grid lines.
+
+The method will take into account the zoom level and the board offset to figure out:
+
+    draw a line every x pixels starting at y where:
+
+    x = zoom level
+    y = offset % zoom level
+
+I hope this works, let's implement it and see...
 
