@@ -88,12 +88,21 @@ public class JaydeASketch extends JPanel {
         mouseDragOrigin.y = e.getY();
 
         // bounds checking
-        if (penLocation.x < 0) { penLocation.x = 0; }
-        if (penLocation.x > BOARD_SIZE.width) { penLocation.x = BOARD_SIZE.width -1; }
-        if (penLocation.y < 0) { penLocation.y = 0; }
-        if (penLocation.y > BOARD_SIZE.height) { penLocation.y = BOARD_SIZE.height -1; }
+        if (penLocation.x < 0) {
+            penLocation.x = 0;
+        }
+        if (penLocation.x > BOARD_SIZE.width) {
+            penLocation.x = BOARD_SIZE.width -1;
+        }
+        if (penLocation.y < 0) {
+            penLocation.y = 0;
+        }
+        if (penLocation.y > BOARD_SIZE.height) {
+            penLocation.y = BOARD_SIZE.height -1;
+        }
 
-        boardPen.drawLine(penLocationPrev.x, penLocationPrev.y, penLocation.x, penLocation.y);
+        boardPen.drawLine(penLocationPrev.x, penLocationPrev.y,
+                penLocation.x, penLocation.y);
 
         paintComponent(getGraphics());
     }
@@ -106,18 +115,21 @@ public class JaydeASketch extends JPanel {
         mouseDragOrigin.x = e.getX();
         mouseDragOrigin.y = e.getY();
 
+        int zoomedWidth = BOARD_SIZE.width * zoomLevel;
+        int zoomedHeight = BOARD_SIZE.height * zoomLevel;
+
         // bounds checking
         if (boardOffset.x > 0) {
             boardOffset.x = 0;
         }
-        if ((boardOffset.x + (BOARD_SIZE.width * zoomLevel)) < BOARD_SIZE.width) {
-            boardOffset.x = BOARD_SIZE.width - (BOARD_SIZE.width * zoomLevel);
+        if ((boardOffset.x + zoomedWidth) < BOARD_SIZE.width) {
+            boardOffset.x = BOARD_SIZE.width - zoomedWidth;
         }
         if (boardOffset.y > 0) {
             boardOffset.y = 0;
         }
-        if ((boardOffset.y + (BOARD_SIZE.height * zoomLevel)) < BOARD_SIZE.height) {
-            boardOffset.y = BOARD_SIZE.height - (BOARD_SIZE.height * zoomLevel);
+        if ((boardOffset.y + zoomedHeight) < BOARD_SIZE.height) {
+            boardOffset.y = BOARD_SIZE.height - zoomedHeight;
         }
 
         paintComponent(getGraphics());
@@ -148,7 +160,8 @@ public class JaydeASketch extends JPanel {
     }
 
     private Point calculateMouseDelta(MouseEvent e) {
-        Point mouseDelta = new Point(e.getX() - mouseDragOrigin.x, e.getY() - mouseDragOrigin.y);
+        Point mouseDelta = new Point(e.getX() - mouseDragOrigin.x,
+                e.getY() - mouseDragOrigin.y);
         compensateForZoom(mouseDelta);
         adjustForFineControl(mouseDelta);
         adjustForAxisLock(mouseDelta);
@@ -157,10 +170,10 @@ public class JaydeASketch extends JPanel {
     }
 
     private void compensateForZoom(Point delta) {
-        // As the user zooms in, the movement of the mouse will become exaggerated
-        // We will slow the mouse down by a factor proportional to the zoomLevel
-        // Not a perfect solution, but this, combined with Alt for fine control
-        // should make it easier to draw when zoomed in
+        // As the user zooms in, the movement of the mouse will become
+        // exaggerated.  We will slow the mouse down by a factor proportional
+        // to the zoomLevel. Not a perfect solution, but this, combined with
+        // Alt for fine control should make it easier to draw when zoomed in
 
         // However, this only applies to dragging the pen.
         if (controlState == ControlStates.PANNING) { return; }
@@ -183,11 +196,11 @@ public class JaydeASketch extends JPanel {
     private void adjustForFineControl(Point delta) {
         if (!fineControl) { return; }
 
-        // The mouse delta is usually 1,0 or 0,1, so fine control will accumulate
-        // deltas until we hit the FINE_CONTROL_LEVEL, and then we will move in
-        // the direction accumulated and reset that direction.  This way we can
-        // reduce how far the thing travels, and doing this before other
-        // controls will also reduce how fast they accumulate deltas.
+        // The mouse delta is usually 1,0 or 0,1, so fine control will
+        // accumulate deltas until we hit the FINE_CONTROL_LEVEL.  Then we
+        // will move in the direction accumulated and reset that direction.
+        // This will reduce how far the thing travels, and doing this before
+        // other controls will also reduce how fast they accumulate deltas.
         fineControlAccumulator.width += Math.abs(delta.x);
         fineControlAccumulator.height += Math.abs(delta.y);
 
@@ -207,18 +220,20 @@ public class JaydeASketch extends JPanel {
     private void adjustForAxisLock(Point delta) {
         if (!axisLock) { return; }
 
-        // The mouse delta is usually 1,0 or 0,1, so to give the user a chance to choose
-        // the direction without getting stuck due to lack of single-pixel mouse precision,
-        // we'll ignore a few pixels of movement (AXIS_LOCK_THRESHOLD) while we accumulate
-        // the deltas for those pixels.
-        // When we have accumulated enough data, we choose which direction to lock based on
-        // which direction the user moved the mouse the furthest
-        // Accumulator resets when the user releases Shift, so we're locked until then
+        // We want to lock in the direction the mouse moves the most right
+        // after pressing the Axis lock key, but the mouse delta is usually
+        // 1,0 or 0,1, which makes it difficult for the user unless they are
+        // super precise with the mouse.
+        // To assist in picking the direction to lock, we will watch how the
+        // user moves the mouse until they have moved one axis by
+        // AXIS_LOCK_THRESHOLD pixels more than the other, and then we will
+        // lock that axis.  We will not actually move until we lock an axis.
         if (axisLockDir == AxisLock.NO_AXIS) {
             axisLockAccumulator.width += Math.abs(delta.x);
             axisLockAccumulator.height += Math.abs(delta.y);
 
-            if (Math.abs(axisLockAccumulator.width - axisLockAccumulator.height) >= AXIS_LOCK_THRESHOLD) {
+            if (Math.abs(axisLockAccumulator.width - axisLockAccumulator.height)
+                    >= AXIS_LOCK_THRESHOLD) {
                 if (axisLockAccumulator.width < axisLockAccumulator.height)
                     axisLockDir = AxisLock.VERTICAL_AXIS;
                 else
@@ -229,6 +244,7 @@ public class JaydeASketch extends JPanel {
             }
         }
 
+        // to lock movement to one axis, we will suppress movement on the other
         if (axisLockDir == AxisLock.HORIZONTAL_AXIS)
             delta.y = 0;
         if (axisLockDir == AxisLock.VERTICAL_AXIS)
@@ -304,11 +320,15 @@ public class JaydeASketch extends JPanel {
 
     private void checkBounds() {
         // push back in-bounds if necessary
-        if (boardOffset.x > 0) { boardOffset.x = 0; }
+        if (boardOffset.x > 0) {
+            boardOffset.x = 0;
+        }
         if ((boardOffset.x + BOARD_SIZE.width * zoomLevel) < BOARD_SIZE.width) {
             boardOffset.x = BOARD_SIZE.width - (BOARD_SIZE.width * zoomLevel);
         }
-        if (boardOffset.y > 0) { boardOffset.y = 0; }
+        if (boardOffset.y > 0) {
+            boardOffset.y = 0;
+        }
         if ((boardOffset.y + BOARD_SIZE.height * zoomLevel) < BOARD_SIZE.height) {
             boardOffset.y = BOARD_SIZE.height - (BOARD_SIZE.height * zoomLevel);
         }
@@ -322,7 +342,8 @@ public class JaydeASketch extends JPanel {
         compositeBufferPen.drawImage(board,0, 0, null);
 
         compositeBufferPen.setColor(PEN_COLOR);
-        compositeBufferPen.drawLine(penLocation.x, penLocation.y, penLocation.x, penLocation.y);
+        compositeBufferPen.drawLine(penLocation.x, penLocation.y,
+                penLocation.x, penLocation.y);
 
         screenBufferPen.drawImage(compositeBuffer,
                 boardOffset.x, boardOffset.y, boardSizeZoomedX, boardSizeZoomedY,
@@ -357,7 +378,7 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processKeyTyped(KeyEvent e) {
-        // make sure we don't process a command if we're exiting the controls/version display
+        // don't process a command if we're exiting the controls/version display
         if (controlState == ControlStates.EXITING_CONTROLS_DISPLAY) {
             controlState = ControlStates.IDLE;
             paintComponent(getGraphics());
@@ -373,19 +394,24 @@ public class JaydeASketch extends JPanel {
 
         if (e.getKeyChar() == ' ') { shakeDrawingSurface(); }
         if (e.getKeyChar() == '0') { resetZoom(); }
-        if (e.getKeyChar() == '+') { increaseZoom(new Point(penLocation.x, penLocation.y)); }
-        if (e.getKeyChar() == '-') { decreaseZoom(new Point(penLocation.x, penLocation.y)); }
+        if (e.getKeyChar() == '+') {
+            increaseZoom(new Point(penLocation.x, penLocation.y));
+        }
+        if (e.getKeyChar() == '-') {
+            decreaseZoom(new Point(penLocation.x, penLocation.y));
+        }
     }
 
     private void processKeyPressed(KeyEvent e) {
-        // if the user presses F1, as long as we're not currently drawing or panning, show controls/version info
-        if (controlState == ControlStates.IDLE && e.getKeyCode() == KeyEvent.VK_F1) {
+        // show help screen on F1 if we're not currently doing something else
+        if (controlState == ControlStates.IDLE &&
+                e.getKeyCode() == KeyEvent.VK_F1) {
             controlState = ControlStates.CONTROLS_DISPLAY;
             paintComponent(getGraphics());
             return;
         }
 
-        // if we're displaying controls/version info, next key press just exits that display
+        // showing help screen, this key press clears it
         if (controlState == ControlStates.CONTROLS_DISPLAY) {
             controlState = ControlStates.EXITING_CONTROLS_DISPLAY;
             paintComponent(getGraphics());
@@ -402,7 +428,9 @@ public class JaydeASketch extends JPanel {
         // if we get here with a control state of EXITING_CONTROLS_DISPLAY then
         // the user cleared the F1 screen with a key that did not also trigger
         // a keyTyped event.  Clear the controlState so we can resume
-        if (controlState == ControlStates.EXITING_CONTROLS_DISPLAY) { controlState = ControlStates.IDLE; }
+        if (controlState == ControlStates.EXITING_CONTROLS_DISPLAY) {
+            controlState = ControlStates.IDLE;
+        }
 
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
             axisLock = false;
@@ -435,8 +463,14 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processMouseReleased(MouseEvent e) {
-        if (controlState == ControlStates.DRAWING && e.getButton() == MouseEvent.BUTTON1) { controlState = ControlStates.IDLE; }
-        if (controlState == ControlStates.PANNING && e.getButton() == MouseEvent.BUTTON3) { controlState = ControlStates.IDLE; }
+        if (controlState == ControlStates.DRAWING &&
+                e.getButton() == MouseEvent.BUTTON1) {
+            controlState = ControlStates.IDLE;
+        }
+        if (controlState == ControlStates.PANNING &&
+                e.getButton() == MouseEvent.BUTTON3) {
+            controlState = ControlStates.IDLE;
+        }
     }
 
     private void processMouseDragged(MouseEvent e) {
@@ -446,8 +480,13 @@ public class JaydeASketch extends JPanel {
 
     private void processMouseWheelMoved(MouseWheelEvent e) {
         if (controlState != ControlStates.IDLE) { return; }
-        if (e.getWheelRotation() < 0) { increaseZoom(new Point(penLocation.x, penLocation.y)); }
-        if (e.getWheelRotation() > 0) { decreaseZoom(new Point(penLocation.x, penLocation.y)); }
+
+        if (e.getWheelRotation() < 0) {
+            increaseZoom(new Point(penLocation.x, penLocation.y));
+        }
+        if (e.getWheelRotation() > 0) {
+            decreaseZoom(new Point(penLocation.x, penLocation.y));
+        }
     }
 
     public void initialize() {
@@ -471,7 +510,8 @@ public class JaydeASketch extends JPanel {
         JFrame frame = new JFrame("Jayde-A-Sketch");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
-        frame.setLocation(screenCenter.x - (BOARD_SIZE.width / 2), screenCenter.y - (BOARD_SIZE.height / 2));
+        frame.setLocation(screenCenter.x - (BOARD_SIZE.width / 2),
+                screenCenter.y - (BOARD_SIZE.height / 2));
         frame.setBackground(Color.BLACK);
         frame.add(this);
         frame.pack();
@@ -497,9 +537,10 @@ public class JaydeASketch extends JPanel {
     }
 
     private void initControlsDisplay() {
+        String controlsImage = "assets\\Controls-Version.png";
 
         try {
-            controlsDisplay = ImageIO.read(new File("Controls-Version.png"));
+            controlsDisplay = ImageIO.read(new File(controlsImage));
         }
         catch (IOException e) {
             System.err.println("Could not load Controls-Version.png");
@@ -561,7 +602,9 @@ public class JaydeASketch extends JPanel {
 
     }
 
-    public static void main(String[] args) { SwingUtilities.invokeLater(JaydeASketch::createAndShowDisplay);}
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(JaydeASketch::createAndShowDisplay);
+    }
 
     public static void createAndShowDisplay() {
         JaydeASketch jaydeASketch = new JaydeASketch();
