@@ -70,3 +70,26 @@ The method will take into account the zoom level and the board offset to figure 
 
 I hope this works, let's implement it and see...
 
+----
+
+Worked nicely.  Now for instructions and a splash screen...  same screen!  Show splash screen at
+startup and then whenever user presses F1.
+
+Commands:
+
+Left Mouse Button to drag pen and etch out drawing surface.
+Right Mouse Button to drag the drawing surface when zoomed in.
+Scroll Wheel or +/- keys to zoom in/out - centers on pen.
+Scroll Wheel click or '0' to reset zoom.
+
+When dragging, hold:
+Alt - for fine control
+Shift - to lock drag axis
+        (locks to axis you next drag in,
+         unlocks only when you release shift)
+Ctrl - to snap the pen to a 10x10 grid
+
+Space to shake and erase the drawing surface
+F1 to bring up this Help screen
+ESC to exit the program
+

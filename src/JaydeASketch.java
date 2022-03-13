@@ -1,12 +1,16 @@
-import javax.swing.*;
+import java.io.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
+import javax.swing.*;
+import javax.imageio.*;
 
 public class JaydeASketch extends JPanel {
 
     private enum ControlStates {
         IDLE,               // No mouse button pressed
+        CONTROLS_DISPLAY,   // Currently, showing Controls display
+        EXITING_CONTROLS_DISPLAY, // just pressed a key to close it
         DRAWING,            // LMB held, so moving the pen around
         PANNING,            // RMB held, so panning the image around
     }
@@ -28,6 +32,7 @@ public class JaydeASketch extends JPanel {
     private Graphics compositeBufferPen;
     private BufferedImage screenBuffer;
     private Graphics screenBufferPen;
+    private BufferedImage controlsDisplay;
     private Graphics boardPen;
     private final Point boardOffset;
     private final Color PEN_COLOR;
@@ -295,6 +300,11 @@ public class JaydeASketch extends JPanel {
 
         if (zoomLevel > 6) { addGridLines(); }
 
+        if (controlState == ControlStates.CONTROLS_DISPLAY) {
+            screenBufferPen.drawImage(controlsDisplay, 100, 100, null);
+        }
+
+
         g.drawImage(screenBuffer, 0, 0, null);
     }
 
@@ -316,6 +326,20 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processKeyTyped(KeyEvent e) {
+        // make sure we don't process a command if we're exiting the controls/version display
+        if (controlState == ControlStates.EXITING_CONTROLS_DISPLAY) {
+            controlState = ControlStates.IDLE;
+            paintComponent(getGraphics());
+            return;
+        }
+
+        // receive key press to exit the controls/version display
+        if (controlState == ControlStates.CONTROLS_DISPLAY) {
+            controlState = ControlStates.EXITING_CONTROLS_DISPLAY;
+            paintComponent(getGraphics());
+            return;
+        }
+
         if (e.getKeyChar() == ' ') { shakeDrawingSurface(); }
         if (e.getKeyChar() == '0') { resetZoom(); }
         if (e.getKeyChar() == '+') { increaseZoom(new Point(penLocation.x, penLocation.y)); }
@@ -323,6 +347,20 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processKeyPressed(KeyEvent e) {
+        // if the user presses F1, as long as we're not currently drawing or panning, show controls/version info
+        if (controlState == ControlStates.IDLE && e.getKeyCode() == KeyEvent.VK_F1) {
+            controlState = ControlStates.CONTROLS_DISPLAY;
+            paintComponent(getGraphics());
+            return;
+        }
+
+        // if we're displaying controls/version info, next key press just exits that display
+        if (controlState == ControlStates.CONTROLS_DISPLAY) {
+            controlState = ControlStates.EXITING_CONTROLS_DISPLAY;
+            paintComponent(getGraphics());
+            return;
+        }
+
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) { System.exit(0); }
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) { axisLock = true; }
         if (e.getKeyCode() == KeyEvent.VK_ALT) { fineControl = true; }
@@ -330,6 +368,11 @@ public class JaydeASketch extends JPanel {
     }
 
     private void processKeyReleased(KeyEvent e) {
+        // if we get here with a control state of EXITING_CONTROLS_DISPLAY then
+        // the user cleared the F1 screen with a key that did not also trigger
+        // a keyTyped event.  Clear the controlState so we can resume
+        if (controlState == ControlStates.EXITING_CONTROLS_DISPLAY) { controlState = ControlStates.IDLE; }
+
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
             axisLock = false;
             axisLockDir = AxisLock.NO_AXIS;
@@ -381,6 +424,7 @@ public class JaydeASketch extends JPanel {
         initFrame();
         initDrawingSurfaces();
         initInterface();
+        initControlsDisplay();
         paintComponent(getGraphics());
     }
 
@@ -419,6 +463,18 @@ public class JaydeASketch extends JPanel {
         boardPen.setColor(BOARD_COLOR);
         boardPen.fillRect(0,0, BOARD_SIZE.width, BOARD_SIZE.height);
         boardPen.setColor(DRAW_COLOR);
+    }
+
+    private void initControlsDisplay() {
+
+        try {
+            controlsDisplay = ImageIO.read(new File("Controls-Version.png"));
+        }
+        catch (IOException e) {
+            System.err.println("Could not load Controls-Version.png");
+            controlsDisplay = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
+        }
+        controlState = ControlStates.CONTROLS_DISPLAY;
     }
 
     private void initInterface() {
