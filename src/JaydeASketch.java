@@ -30,7 +30,6 @@ public class JaydeASketch extends JPanel {
     private Graphics screenBufferPen;
     private Graphics boardPen;
     private final Point boardOffset;
-    private BufferedImage penPointer;
     private final Color PEN_COLOR;
     private final Point penLocation;
     private Point mouseDragOrigin;
@@ -286,7 +285,8 @@ public class JaydeASketch extends JPanel {
 
         compositeBufferPen.drawImage(board,0, 0, null);
 
-        compositeBufferPen.drawImage(penPointer, penLocation.x -1, penLocation.y -1,null);
+        compositeBufferPen.setColor(PEN_COLOR);
+        compositeBufferPen.drawLine(penLocation.x, penLocation.y, penLocation.x, penLocation.y);
 
         screenBufferPen.drawImage(compositeBuffer,
                 boardOffset.x, boardOffset.y, boardSizeZoomedX, boardSizeZoomedY,
@@ -380,7 +380,6 @@ public class JaydeASketch extends JPanel {
         initPanel();
         initFrame();
         initDrawingSurfaces();
-        initPenPointer();
         initInterface();
         paintComponent(getGraphics());
     }
@@ -416,16 +415,6 @@ public class JaydeASketch extends JPanel {
         boardPen.setColor(BOARD_COLOR);
         boardPen.fillRect(0,0, BOARD_SIZE.width, BOARD_SIZE.height);
         boardPen.setColor(DRAW_COLOR);
-    }
-
-    private void initPenPointer() {
-        penPointer = new BufferedImage(3, 3, BufferedImage.TYPE_INT_RGB);
-        Graphics g = penPointer.getGraphics();
-        g.setColor(BOARD_COLOR);
-        g.fillRect(0,0, 3, 3);
-        g.setColor(PEN_COLOR);
-        g.drawLine(1, 1, 1, 1);
-        g.dispose();
     }
 
     private void initInterface() {
