@@ -32,7 +32,6 @@ public class JaydeASketch extends JPanel {
     private final Point boardOffset;
     private BufferedImage penPointer;
     private final Color PEN_COLOR;
-    private final Dimension penPointerBaseSize;
     private final Point penLocation;
     private Point mouseDragOrigin;
     private States controlState;
@@ -58,7 +57,6 @@ public class JaydeASketch extends JPanel {
         GRID_COLOR = new Color(48, 48, 48);
         boardOffset = new Point(0,0);
         PEN_COLOR = new Color(255,255,255);
-        penPointerBaseSize = new Dimension(4,4);
         penLocation = new Point(BOARD_SIZE.width / 2, BOARD_SIZE.height / 2);
         controlState = States.IDLE;
         axisLock = false;
@@ -288,7 +286,7 @@ public class JaydeASketch extends JPanel {
 
         compositeBufferPen.drawImage(board,0, 0, null);
 
-        compositeBufferPen.drawImage(penPointer, penLocation.x, penLocation.y,null);
+        compositeBufferPen.drawImage(penPointer, penLocation.x -1, penLocation.y -1,null);
 
         screenBufferPen.drawImage(compositeBuffer,
                 boardOffset.x, boardOffset.y, boardSizeZoomedX, boardSizeZoomedY,
@@ -421,12 +419,12 @@ public class JaydeASketch extends JPanel {
     }
 
     private void initPenPointer() {
-        penPointer = new BufferedImage(penPointerBaseSize.width, penPointerBaseSize.height, BufferedImage.TYPE_INT_RGB);
+        penPointer = new BufferedImage(3, 3, BufferedImage.TYPE_INT_RGB);
         Graphics g = penPointer.getGraphics();
         g.setColor(BOARD_COLOR);
-        g.fillRect(0,0, penPointerBaseSize.width, penPointerBaseSize.height);
+        g.fillRect(0,0, 3, 3);
         g.setColor(PEN_COLOR);
-        g.fillRect(0, 0, penPointerBaseSize.width / 2, penPointerBaseSize.height / 2);
+        g.drawLine(1, 1, 1, 1);
         g.dispose();
     }
 
