@@ -93,3 +93,22 @@ Space to shake and erase the drawing surface
 F1 to bring up this Help screen
 ESC to exit the program
 
+-------------
+
+So, program works as intended...  but upon re-thinking things, I want to bring it back to more
+"realistic" Etch-a-Sketch behavior.  To start out with an Etch-A-Sketch, using one hand would
+be turning just one knob (and thus only one axis).  So I want to reverse the Axis lock and
+have it on by default.  If the user wants to "turn both knobs" (so the pen follows the mouse
+in both axis' at the same time), they'll need to use both hands - one using the mouse, the
+other on the Shift key.
+
+We will need to accommodate this in behavior by making Axis Lock reset when the mouse is released.
+This way, the user can change which direction they move the mouse by releasing and pressing the
+mouse button again, and holding shift will just "free" the pen until they let go of shift.
+
+Also going to switch Alt and Control buttons so that Control will allow "Fine Control" and
+"Alt" will snap to a grid (alternate pen positioning).
+
+These changes will require a change to the help screen as well.  Let's also just call it
+HELP_SCREEN instead of Control-Version.
+

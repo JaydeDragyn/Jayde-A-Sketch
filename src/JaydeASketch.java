@@ -65,9 +65,9 @@ public class JaydeASketch extends JPanel {
         penLocation = new Point(BOARD_SIZE.width / 2, BOARD_SIZE.height / 2);
         controlState = ControlStates.IDLE;
         zoomCompensationAccumulator = new Dimension(0,0);
-        axisLock = false;
+        axisLock = true;
         axisLockDir = AxisLock.NO_AXIS;
-        AXIS_LOCK_THRESHOLD = 5;
+        AXIS_LOCK_THRESHOLD = 10;
         axisLockAccumulator = new Dimension(0,0);
         fineControl = false;
         FINE_CONTROL_LEVEL = 5;
@@ -218,6 +218,9 @@ public class JaydeASketch extends JPanel {
     }
 
     private void adjustForAxisLock(Point delta) {
+        // We want axisLock on by default for DRAWING,
+        // but we want to ignore axisLock for PANNING
+        if (controlState != ControlStates.DRAWING) { return; }
         if (!axisLock) { return; }
 
         // We want to lock in the direction the mouse moves the most right
@@ -252,6 +255,8 @@ public class JaydeASketch extends JPanel {
     }
 
     private void adjustForSnapToGrid(Point delta) {
+        // We only want to adjust for snapToGrid when DRAWING
+        if (controlState != ControlStates.DRAWING) { return; }
         if (!snapToGrid) { return; }
 
         // The mouse delta is usually 1,0 or 0,1, so snapping to grid will
@@ -419,9 +424,9 @@ public class JaydeASketch extends JPanel {
         }
 
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) { System.exit(0); }
-        if (e.getKeyCode() == KeyEvent.VK_SHIFT) { axisLock = true; }
-        if (e.getKeyCode() == KeyEvent.VK_ALT) { fineControl = true; }
-        if (e.getKeyCode() == KeyEvent.VK_CONTROL) { snapToGrid = true; }
+        if (e.getKeyCode() == KeyEvent.VK_SHIFT) { axisLock = false; }
+        if (e.getKeyCode() == KeyEvent.VK_CONTROL) { fineControl = true; }
+        if (e.getKeyCode() == KeyEvent.VK_ALT) { snapToGrid = true; }
     }
 
     private void processKeyReleased(KeyEvent e) {
@@ -433,15 +438,14 @@ public class JaydeASketch extends JPanel {
         }
 
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
-            axisLock = false;
-            axisLockDir = AxisLock.NO_AXIS;
+            axisLock = true;
             axisLockAccumulator = new Dimension(0,0);
         }
-        if (e.getKeyCode() == KeyEvent.VK_ALT) {
+        if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
             fineControl = false;
             fineControlAccumulator = new Dimension(0,0);
         }
-        if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
+        if (e.getKeyCode() == KeyEvent.VK_ALT) {
             snapToGrid = false;
             snapToGridAccumulator = new Dimension(0,0);
         }
@@ -451,6 +455,8 @@ public class JaydeASketch extends JPanel {
         if (controlState != ControlStates.IDLE) { return; }
         if (e.getButton() == MouseEvent.BUTTON1) {
             controlState = ControlStates.DRAWING;
+            axisLockDir = AxisLock.NO_AXIS;
+            axisLockAccumulator = new Dimension(0,0);
             mouseDragOrigin = new Point(e.getX(), e.getY());
         }
         if (e.getButton() == MouseEvent.BUTTON3) {
@@ -465,6 +471,8 @@ public class JaydeASketch extends JPanel {
     private void processMouseReleased(MouseEvent e) {
         if (controlState == ControlStates.DRAWING &&
                 e.getButton() == MouseEvent.BUTTON1) {
+            axisLockDir = AxisLock.NO_AXIS;
+            axisLockAccumulator = new Dimension(0,0);
             controlState = ControlStates.IDLE;
         }
         if (controlState == ControlStates.PANNING &&
@@ -537,7 +545,7 @@ public class JaydeASketch extends JPanel {
     }
 
     private void initControlsDisplay() {
-        String controlsImage = "assets\\Controls-Version.png";
+        String controlsImage = "assets\\HelpScreen-v1.1.png";
 
         try {
             controlsDisplay = ImageIO.read(new File(controlsImage));
