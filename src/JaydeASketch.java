@@ -9,8 +9,8 @@ public class JaydeASketch extends JPanel {
 
     private enum ControlStates {
         IDLE,               // No mouse button pressed
-        CONTROLS_DISPLAY,   // Currently, showing Controls display
-        EXITING_CONTROLS_DISPLAY, // just pressed a key to close it
+        HELP_DISPLAY,       // Currently, showing Controls display
+        EXITING_HELP_DISPLAY, // just pressed a key to close it
         DRAWING,            // LMB held, so moving the pen around
         PANNING,            // RMB held, so panning the image around
     }
@@ -32,7 +32,7 @@ public class JaydeASketch extends JPanel {
     private Graphics compositeBufferPen;
     private BufferedImage screenBuffer;
     private Graphics screenBufferPen;
-    private BufferedImage controlsDisplay;
+    private BufferedImage helpDisplay;
     private Graphics boardPen;
     private final Point boardOffset;
     private final Color PEN_COLOR;
@@ -357,8 +357,8 @@ public class JaydeASketch extends JPanel {
 
         if (zoomLevel > 6) { addGridLines(); }
 
-        if (controlState == ControlStates.CONTROLS_DISPLAY) {
-            screenBufferPen.drawImage(controlsDisplay, 100, 100, null);
+        if (controlState == ControlStates.HELP_DISPLAY) {
+            screenBufferPen.drawImage(helpDisplay, 100, 100, null);
         }
 
 
@@ -384,15 +384,15 @@ public class JaydeASketch extends JPanel {
 
     private void processKeyTyped(KeyEvent e) {
         // don't process a command if we're exiting the controls/version display
-        if (controlState == ControlStates.EXITING_CONTROLS_DISPLAY) {
+        if (controlState == ControlStates.EXITING_HELP_DISPLAY) {
             controlState = ControlStates.IDLE;
             paintComponent(getGraphics());
             return;
         }
 
         // receive key press to exit the controls/version display
-        if (controlState == ControlStates.CONTROLS_DISPLAY) {
-            controlState = ControlStates.EXITING_CONTROLS_DISPLAY;
+        if (controlState == ControlStates.HELP_DISPLAY) {
+            controlState = ControlStates.EXITING_HELP_DISPLAY;
             paintComponent(getGraphics());
             return;
         }
@@ -411,14 +411,14 @@ public class JaydeASketch extends JPanel {
         // show help screen on F1 if we're not currently doing something else
         if (controlState == ControlStates.IDLE &&
                 e.getKeyCode() == KeyEvent.VK_F1) {
-            controlState = ControlStates.CONTROLS_DISPLAY;
+            controlState = ControlStates.HELP_DISPLAY;
             paintComponent(getGraphics());
             return;
         }
 
         // showing help screen, this key press clears it
-        if (controlState == ControlStates.CONTROLS_DISPLAY) {
-            controlState = ControlStates.EXITING_CONTROLS_DISPLAY;
+        if (controlState == ControlStates.HELP_DISPLAY) {
+            controlState = ControlStates.EXITING_HELP_DISPLAY;
             paintComponent(getGraphics());
             return;
         }
@@ -433,7 +433,7 @@ public class JaydeASketch extends JPanel {
         // if we get here with a control state of EXITING_CONTROLS_DISPLAY then
         // the user cleared the F1 screen with a key that did not also trigger
         // a keyTyped event.  Clear the controlState so we can resume
-        if (controlState == ControlStates.EXITING_CONTROLS_DISPLAY) {
+        if (controlState == ControlStates.EXITING_HELP_DISPLAY) {
             controlState = ControlStates.IDLE;
         }
 
@@ -545,16 +545,20 @@ public class JaydeASketch extends JPanel {
     }
 
     private void initControlsDisplay() {
-        String controlsImage = "assets\\HelpScreen-v1.1.png";
+
+        String helpImage = "HelpScreen-v1.1.png";
 
         try {
-            controlsDisplay = ImageIO.read(new File(controlsImage));
+//            helpDisplay = ImageIO.read(new File(helpImage));
+            InputStream inputStream = JaydeASketch.class.getResourceAsStream(helpImage);
+            if (inputStream == null) { throw new IOException(); }
+            helpDisplay = ImageIO.read(inputStream);
         }
         catch (IOException e) {
-            System.err.println("Could not load Controls-Version.png");
-            controlsDisplay = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
+            System.err.println("Could not load " + helpImage);
+            helpDisplay = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
         }
-        controlState = ControlStates.CONTROLS_DISPLAY;
+        controlState = ControlStates.HELP_DISPLAY;
     }
 
     private void initInterface() {
