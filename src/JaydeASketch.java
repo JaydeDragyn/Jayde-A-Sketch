@@ -23,6 +23,7 @@ public class JaydeASketch extends JPanel {
 
     // Member Data ------------------------------------------------------------
 
+    private JFrame frame;
     private final Dimension BOARD_SIZE;
     private final Color BOARD_COLOR;
     private final Color DRAW_COLOR;
@@ -67,7 +68,7 @@ public class JaydeASketch extends JPanel {
         zoomCompensationAccumulator = new Dimension(0,0);
         axisLock = true;
         axisLockDir = AxisLock.NO_AXIS;
-        AXIS_LOCK_THRESHOLD = 10;
+        AXIS_LOCK_THRESHOLD = 5;
         axisLockAccumulator = new Dimension(0,0);
         fineControl = false;
         FINE_CONTROL_LEVEL = 5;
@@ -177,17 +178,23 @@ public class JaydeASketch extends JPanel {
 
         // However, this only applies to dragging the pen.
         if (controlState == ControlStates.PANNING) { return; }
+
+        // and only if we're zoomed in
+        if (zoomLevel == 1) { return; }
+
         zoomCompensationAccumulator.width += Math.abs(delta.x);
         zoomCompensationAccumulator.height += Math.abs (delta.y);
 
-        if (zoomCompensationAccumulator.width > (zoomLevel -1)) {
+        if (zoomCompensationAccumulator.width >= (zoomLevel)) {
             zoomCompensationAccumulator.width = 0;
+            delta.x = (delta.x > 0)?1:-1;
         } else {
             delta.x = 0;
         }
 
-        if (zoomCompensationAccumulator.height > (zoomLevel -1)) {
+        if (zoomCompensationAccumulator.height >= (zoomLevel)) {
             zoomCompensationAccumulator.height = 0;
+            delta.y = (delta.y > 0)?1:-1;
         } else {
             delta.y = 0;
         }
@@ -451,6 +458,19 @@ public class JaydeASketch extends JPanel {
         }
     }
 
+    private void processWindowGainedFocus() {
+        // An issue with gaining focus is that the user might have
+        // pressed Alt-Tab to switch to a different window.
+        // When that happens, the processKeyPressed() will trigger
+        // on the Alt, but we will never hear the Alt key release,
+        // so we'll be stuck in snapToGrid == true mode.
+        // To fix this, we'll set snapToGrid = false on the assumption
+        // that when the user comes back to this window, they will
+        // start from a clean slate.
+        snapToGrid = false;
+        snapToGridAccumulator = new Dimension(0,0);
+    }
+
     private void processMousePressed(MouseEvent e) {
         if (controlState != ControlStates.IDLE) { return; }
         if (e.getButton() == MouseEvent.BUTTON1) {
@@ -515,7 +535,7 @@ public class JaydeASketch extends JPanel {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Point screenCenter = ge.getCenterPoint();
 
-        JFrame frame = new JFrame("Jayde-A-Sketch");
+        frame = new JFrame("Jayde-A-Sketch");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
         frame.setLocation(screenCenter.x - (BOARD_SIZE.width / 2),
@@ -546,7 +566,7 @@ public class JaydeASketch extends JPanel {
 
     private void initControlsDisplay() {
 
-        String helpImage = "HelpScreen-v1.1.png";
+        String helpImage = "HelpScreen-v1.3.png";
 
         try {
 //            helpDisplay = ImageIO.read(new File(helpImage));
@@ -579,6 +599,14 @@ public class JaydeASketch extends JPanel {
             public void keyReleased(KeyEvent e) {
                 super.keyReleased(e);
                 processKeyReleased(e);
+            }
+        });
+
+        frame.addWindowFocusListener(new WindowAdapter() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {
+                super.windowGainedFocus(e);
+                processWindowGainedFocus();
             }
         });
 
