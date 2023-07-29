@@ -92,13 +92,13 @@ public class JaydeASketch extends JPanel {
         if (penLocation.x < 0) {
             penLocation.x = 0;
         }
-        if (penLocation.x > BOARD_SIZE.width) {
+        if (penLocation.x >= BOARD_SIZE.width) {
             penLocation.x = BOARD_SIZE.width -1;
         }
         if (penLocation.y < 0) {
             penLocation.y = 0;
         }
-        if (penLocation.y > BOARD_SIZE.height) {
+        if (penLocation.y >= BOARD_SIZE.height) {
             penLocation.y = BOARD_SIZE.height -1;
         }
 
